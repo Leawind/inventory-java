@@ -1,0 +1,26 @@
+# Gradle project-specific cache directory
+.gradle
+
+# Gradle build output
+build
+
+# idea
+.idea/
+out
+*.ipr
+*.iws
+*.iml
+
+# eclipse
+eclipse
+*.launch
+.settings
+.metadata
+.classpath
+.project
+
+# visual studio code
+.vscode/
+
+# visual studio
+.vs/

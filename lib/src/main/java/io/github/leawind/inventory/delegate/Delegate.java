@@ -134,7 +134,7 @@ public class Delegate<D> {
    *
    * <p>The key is used to identify the listener and can be used to remove the listener later.
    *
-   * <p>If the key is `null`, a new listener will be added.
+   * <p>If the key is `null`, no old listener will be removed, and a new listener will be added.
    *
    * <p>If the key is not `null`, and a handler with the same key already exists, the listener will
    * be updated.

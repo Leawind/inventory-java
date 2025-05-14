@@ -91,6 +91,25 @@ public class Delegate<D> {
     return handler.listener;
   }
 
+  /** Add a listener that will be executed once and then removed */
+  public Delegate<D> once(Consumer<Event> listener) {
+    return addListener(
+        (e) -> {
+          listener.accept(e);
+          e.removeSelf();
+        });
+  }
+
+  /** Add a listener that will be executed once and then removed */
+  public Delegate<D> once(Object key, Consumer<Event> listener) {
+    return addListener(
+        key,
+        (e) -> {
+          listener.accept(e);
+          e.removeSelf();
+        });
+  }
+
   /** Add a new listener with {@link Delegate#DEFAULT_PRIORITY} */
   public Delegate<D> addListener(Consumer<Event> listener) {
     return addListener(listener, DEFAULT_PRIORITY);

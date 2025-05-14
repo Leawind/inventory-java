@@ -24,6 +24,23 @@ public class DelegateTest {
   }
 
   @Test
+  void testOnce() {
+    var s = new StringBuilder();
+
+    delegate
+        .addListener(e -> s.append("A"))
+        .once(e -> s.append("B"))
+        .once(e -> s.append("C"))
+        .once("a key", e -> s.append("D"))
+        .once("a key", e -> s.append("E"));
+
+    delegate.broadcast(null);
+    delegate.broadcast(null);
+
+    assertEquals("ABCEA", s.toString());
+  }
+
+  @Test
   void testAddAndRemoveListener() {
     var s = new StringBuilder();
 

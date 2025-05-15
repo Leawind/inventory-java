@@ -23,6 +23,13 @@ public class ThrottledAction<T> {
     this(actionFn, interval, Executors.newSingleThreadScheduledExecutor());
   }
 
+  /**
+   * Create a new ThrottledAction
+   *
+   * @param actionFn The action to execute
+   * @param interval Mimimum time between executions
+   * @param scheduler The scheduler to use for executing the action
+   */
   public ThrottledAction(
       @Nonnull Supplier<T> actionFn, long interval, @Nonnull ScheduledExecutorService scheduler) {
     this.actionFn = actionFn;

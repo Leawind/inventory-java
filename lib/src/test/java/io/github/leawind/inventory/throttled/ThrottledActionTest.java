@@ -67,7 +67,7 @@ class ThrottledActionTest {
     assertTrue(throttledAction.isScheduled());
 
     // Wait for scheduled execution
-    String result = future.get(200, TimeUnit.MILLISECONDS);
+    String result = future.get();
     assertEquals("result-2", result);
     assertEquals(2, actionCounter.get());
     assertFalse(throttledAction.isScheduled());

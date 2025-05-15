@@ -29,47 +29,15 @@ public class DelegateTest {
 
     delegate
         .addListener(e -> s.append("A"))
-        .once(e -> s.append("B"))
-        .once(e -> s.append("C"))
-        .once("a key", e -> s.append("D"))
-        .once("a key", e -> s.append("E"));
+        .addOnce(e -> s.append("B"))
+        .addOnce(e -> s.append("C"))
+        .setOnce("a key", e -> s.append("D"))
+        .setOnce("a key", e -> s.append("E"));
 
     delegate.broadcast(null);
     delegate.broadcast(null);
 
     assertEquals("ABCEA", s.toString());
-  }
-
-  @Test
-  void testAddAndRemoveListener() {
-    var s = new StringBuilder();
-
-    delegate.addListener(e -> s.append("A"));
-    delegate.addListener(e -> s.append("B"), 4);
-
-    delegate.addListener("alice", e -> s.append("C"));
-    delegate.addListener("bob", e -> s.append("D"));
-    delegate.addListener("alice", e -> s.append("E"));
-
-    delegate.broadcast(null);
-    assertEquals("BADE", s.toString());
-  }
-
-  @Test
-  void testRemoveListener() {
-    var s = new StringBuilder();
-
-    var listener = delegate.listener(e -> s.append(e.data));
-
-    delegate
-        .addListener(e -> s.append('A'))
-        .addListener(listener)
-        .addListener(e -> s.append('B'))
-        .removeListener(listener)
-        .addListener(e -> s.append('C'));
-
-    delegate.broadcast("test");
-    assertEquals("ABC", s.toString());
   }
 
   @Test
@@ -84,6 +52,32 @@ public class DelegateTest {
 
     delegate.broadcast(null);
     assertEquals("BCAD", s.toString());
+  }
+
+  @Test
+  void testRemoveListener() {
+    var s = new StringBuilder();
+
+    var listenerA = delegate.listener(e -> s.append("A"));
+    var listenerB = delegate.listener(e -> s.append("B"));
+
+    delegate.addListener(listenerA);
+    delegate.addListener(listenerB, 4);
+
+    delegate.setListener("alice", e -> s.append("C"));
+    delegate.setListener("bob", e -> s.append("D"));
+    delegate.setListener("alice", e -> s.append("E"));
+
+    delegate.broadcast(null);
+    assertEquals("BADE", s.toString());
+
+    s.delete(0, s.length());
+
+    delegate.removeListener(listenerA);
+    delegate.removeListener("bob");
+
+    delegate.broadcast(null);
+    assertEquals("BE", s.toString());
   }
 
   @Test
@@ -139,22 +133,22 @@ public class DelegateTest {
   }
 
   @Test
-  void addListener_withNullKey_shouldThrowException() {
-    assertThrows(IllegalArgumentException.class, () -> delegate.addListener(null, e -> {}, 0));
+  void setListener_withNullKey_shouldThrowException() {
+    assertThrows(IllegalArgumentException.class, () -> delegate.setListener(null, e -> {}, 0));
   }
 
   @Test
-  void addListener_withNewKey_shouldAddHandler() {
-    delegate.addListener("testKey", e -> {}, 1);
+  void setListener_withNewKey_shouldAddHandler() {
+    delegate.setListener("testKey", e -> {}, 1);
     assertTrue(delegate.containsListener("testKey"));
     assertFalse(delegate.containsListener("no such key"));
   }
 
   @Test
-  void addListener_withExistingKey_shouldUpdateListener() {
+  void setListener_withExistingKey_shouldUpdateListener() {
     var s = new StringBuilder();
 
-    delegate.addListener("testKey", e -> s.append("A")).addListener("testKey", e -> s.append("B"));
+    delegate.setListener("testKey", e -> s.append("A")).setListener("testKey", e -> s.append("B"));
 
     delegate.broadcast(null);
     assertEquals("B", s.toString());

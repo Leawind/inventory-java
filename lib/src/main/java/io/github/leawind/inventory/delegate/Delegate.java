@@ -1,9 +1,11 @@
 package io.github.leawind.inventory.delegate;
 
+import java.lang.constant.Constable;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
@@ -27,13 +29,18 @@ public class Delegate<D> {
    * <p>This map is used to quickly look up a handler by its key. Handlers with `null` key are not
    * in this map
    */
-  private final Map<Object, Handler> key2handlerMap = new HashMap<>();
+  private final Map<Constable, Handler> key2handlerMap = new HashMap<>();
 
-  /** Creates a unnamed delegate */
+  /** Creates an unnamed delegate */
   public Delegate() {
     this("Unnamed");
   }
 
+  /**
+   * Creates a delegate with name
+   *
+   * @param name Delegate name for debugging
+   */
   public Delegate(String name) {
     this.name = name;
   }
@@ -41,27 +48,7 @@ public class Delegate<D> {
   /** Remove all listeners */
   public Delegate<D> clear() {
     handlers.clear();
-    return this;
-  }
-
-  /**
-   * Add a event handler
-   *
-   * <p>The given handler will be inserted at the appropriate position based on its priority.
-   *
-   * @param handler The handler to add
-   */
-  protected Delegate<D> addHandler(Handler handler) {
-    var it = handlers.listIterator();
-
-    while (it.hasNext()) {
-      if (it.next().priority < handler.priority) {
-        it.previous();
-        break;
-      }
-    }
-
-    it.add(handler);
+    key2handlerMap.clear();
     return this;
   }
 
@@ -71,7 +58,7 @@ public class Delegate<D> {
    * @param key The key of the listener. If `null`, it always return false
    * @return true if the listener exists, false otherwise
    */
-  public boolean containsListener(Object key) {
+  public boolean containsListener(Constable key) {
     return key2handlerMap.containsKey(key);
   }
 
@@ -83,7 +70,7 @@ public class Delegate<D> {
    * @param key The key of the listener
    * @return The listener if found, or `null` otherwise
    */
-  public @Nullable Consumer<Event> getListener(Object key) {
+  public @Nullable Consumer<Event> getListener(Constable key) {
     var handler = key2handlerMap.get(key);
     if (handler == null) {
       return null;
@@ -92,22 +79,18 @@ public class Delegate<D> {
   }
 
   /** Add a listener that will be executed once and then removed */
-  public Delegate<D> once(Consumer<Event> listener) {
-    return addListener(
-        (e) -> {
-          listener.accept(e);
-          e.removeSelf();
-        });
+  public Delegate<D> addOnce(Consumer<Event> listener) {
+    return addHandler(new Handler(null, listener, DEFAULT_PRIORITY, true));
   }
 
-  /** Add a listener that will be executed once and then removed */
-  public Delegate<D> once(Object key, Consumer<Event> listener) {
-    return addListener(
-        key,
-        (e) -> {
-          listener.accept(e);
-          e.removeSelf();
-        });
+  /** Set a one-time listener with a key (replaces existing if key exists) */
+  public Delegate<D> setOnce(Constable key, Consumer<Event> listener) {
+    return addHandler(new Handler(key, listener, DEFAULT_PRIORITY, true));
+  }
+
+  /** Set a one-time listener with a key (replaces existing if key exists) */
+  public Delegate<D> setOnce(Constable key, Consumer<Event> listener, int priority) {
+    return addHandler(new Handler(key, listener, priority, true));
   }
 
   /** Add a new listener with {@link Delegate#DEFAULT_PRIORITY} */
@@ -117,67 +100,70 @@ public class Delegate<D> {
 
   /** Add a listener with the specified priority */
   public Delegate<D> addListener(Consumer<Event> listener, int priority) {
-    return addHandler(new Handler(null, listener, priority));
+    return addHandler(new Handler(null, listener, priority, false));
   }
 
   /**
-   * Add a listener with the specified key.
+   * Set a listener with a key (replaces existing if key exists), use default priority
    *
-   * @see Delegate#addListener(Object, Consumer,int)
+   * @see Delegate#setListener(Constable, Consumer,int)
    */
-  public Delegate<D> addListener(Object key, Consumer<Event> listener) {
-    return addListener(key, listener, DEFAULT_PRIORITY);
+  public Delegate<D> setListener(Constable key, Consumer<Event> listener) {
+    return setListener(key, listener, DEFAULT_PRIORITY);
   }
 
   /**
-   * Add a listener with the specified key and priority
+   * Set a listener with a key (replaces existing if key exists)
    *
-   * <p>The key is used to identify the listener and can be used to remove the listener later.
-   *
-   * <p>If the key is `null`, no old listener will be removed, and a new listener will be added.
-   *
-   * <p>If the key is not `null`, and a handler with the same key already exists, the listener will
-   * be updated.
-   *
-   * @param key The key of the listener
-   * @param listener The callback to invoke
-   * @param priority The priority of the listener (higher values execute first)
-   * @return self for chaining
+   * @param key Unique key for the listener
+   * @param listener The listener function
+   * @param priority Priority of the listener, higher executes first
    */
-  public Delegate<D> addListener(Object key, Consumer<Event> listener, int priority) {
+  public Delegate<D> setListener(Constable key, Consumer<Event> listener, int priority) {
     if (key == null) {
       throw new IllegalArgumentException("Listener key must not be null.");
     }
-
-    var handler = key2handlerMap.get(key);
-
-    if (handler != null) {
-      // If a handler with the same key already exists, update its listener
-      handler.listener = listener;
-
-      // Their may be some other handlers with same priority were added after this old handler was
-      // added. We should make sure this new listener is executed after the old handler. So we
-      // should move it right after the old handler. To do that, we remove the old handler from
-      // the list and add it back later
-      handlers.remove(handler);
-    } else {
-      // It's a new key, create a new handler and add it to the key map
-      handler = new Handler(key, listener, priority);
-      key2handlerMap.put(key, handler);
-    }
-    addHandler(handler);
-
-    return this;
+    return addHandler(new Handler(key, listener, priority, false));
   }
 
   /**
-   * Removes a listener by key
+   * Internal method to add a handler to the list in the correct position based on priority
    *
-   * @param key The key of the listener to remove
-   * @return self for chaining
+   * <p>If key is specified in given handler, it replaces the existing handler with the same key
+   *
+   * @param handler The handler to add
    */
-  public Delegate<D> removeListener(Object key) {
-    var handler = this.key2handlerMap.get(key);
+  protected Delegate<D> addHandler(Handler handler) {
+    // If the handler has a key, replace the existing handler with the same key
+    if (handler.key != null) {
+      if (key2handlerMap.containsKey(handler.key)) {
+        removeListener(handler.key);
+      }
+      key2handlerMap.put(handler.key, handler);
+    }
+
+    // Insert the handler at the correct position in the list
+    var it = handlers.listIterator();
+    while (it.hasNext()) {
+      if (it.next().priority < handler.priority) {
+        it.previous();
+        break;
+      }
+    }
+    it.add(handler);
+
+    return this;
+  }
+
+  /**
+   * Remove listeners by key
+   *
+   * <p>If the key doesn't exist, it does nothing
+   *
+   * @param key The key of the listener to remove.
+   */
+  public Delegate<D> removeListener(Constable key) {
+    var handler = this.key2handlerMap.remove(key);
     if (handler != null) {
       handlers.remove(handler);
     }
@@ -185,17 +171,21 @@ public class Delegate<D> {
   }
 
   /**
-   * Removes the first occurrence of a listener Only removes the highest-priority instance if
-   * duplicate
+   * Removes first occurrence of listener
    *
-   * @param listener The callback to remove
-   * @return self for chaining
+   * <p>Only removes highest-priority instance if duplicate
+   *
+   * @param listener The listener to remove.
    */
   public Delegate<D> removeListener(Consumer<Event> listener) {
     var it = handlers.listIterator();
     while (it.hasNext()) {
-      if (it.next().listener == listener) {
+      var handler = it.next();
+      if (handler.listener == listener) {
         it.remove();
+        if (handler.key != null) {
+          key2handlerMap.remove(handler.key);
+        }
         break;
       }
     }
@@ -203,22 +193,27 @@ public class Delegate<D> {
   }
 
   /**
-   * Broadcasts data to all listeners Execution order: High -> Low priority
+   * Broadcasts data to listeners
+   *
+   * <p>Execution order: High -> Low priority
    *
    * @param data The data to broadcast
-   * @throws NullPointerException if data is null
    */
   public void broadcast(D data) {
     var it = handlers.listIterator();
     while (it.hasNext()) {
+      var handler = it.next();
       var event = new Event(data);
 
-      it.next().listener.accept(event);
+      if (handler.once) {
+        event.removeSelf();
+      }
+
+      handler.listener.accept(event);
 
       if (event.doRemoveSelf) {
         it.remove();
       }
-
       if (event.doStop) {
         break;
       }
@@ -244,9 +239,13 @@ public class Delegate<D> {
     return listener;
   }
 
-  /** Event execution context */
+  /** Event object passed to delegate listeners */
   public class Event {
+
+    /** Whether event propagation is going to be stopped */
     private boolean doStop = false;
+
+    /** Whether the listener should be removed after execution */
     private boolean doRemoveSelf = false;
 
     /** The data associated with the event */
@@ -283,19 +282,24 @@ public class Delegate<D> {
 
   /** Event handler */
   protected class Handler {
-    protected final Object key;
+    protected final @Nullable Constable key;
     protected Consumer<Event> listener;
     protected final int priority;
+    protected final boolean once;
 
     /**
-     * @param key The key object to identify the listener
-     * @param listener The callback to invoke
-     * @param priority The priority of the listener (higher values execute first)
+     * @param key Optional unique key for the handler
+     * @param listener The listener function to be called
+     * @param priority Priority of the handler (higher executes first)
+     * @param once Whether the handler is one-time
+     * @throws NullPointerException if listener is null
      */
-    protected Handler(Object key, Consumer<Event> listener, int priority) {
+    protected Handler(@Nullable Constable key, Consumer<Event> listener, int priority, boolean once)
+        throws NullPointerException {
       this.key = key;
-      this.listener = listener;
+      this.listener = Objects.requireNonNull(listener);
       this.priority = priority;
+      this.once = once;
     }
   }
 }

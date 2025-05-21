@@ -14,8 +14,11 @@ repositories {
 }
 
 dependencies {
+    // Test Framework
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
+    // Assertion Library
+    testImplementation(libs.hamcrest)
 
     api(libs.commons.math3)
     implementation(libs.guava)

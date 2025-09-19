@@ -4,12 +4,6 @@ plugins {
 }
 
 repositories {
-    maven {
-        name = "deno maven proxy"
-        url = uri("http://localhost:8080")
-        isAllowInsecureProtocol = true
-    }
-
     mavenCentral()
 }
 

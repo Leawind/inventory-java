@@ -1,4 +1,4 @@
-package io.github.leawind.inventory.just;
+package io.github.leawind.inventory.just.enums;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.leawind.inventory.just.enums.Result;
 import org.junit.jupiter.api.Test;
 
 public class ResultTest {
@@ -15,20 +14,20 @@ public class ResultTest {
   @Test
   public void testCreation() {
     // Test ok()
-    Result<String, Integer> okResult = Result.ok("success");
+    Result<String, Integer> okResult = Result.Ok("success");
     assertTrue(okResult.isOk());
     assertEquals("success", okResult.unwrap());
 
     // Test err()
-    Result<String, Integer> errResult = Result.err(404);
+    Result<String, Integer> errResult = Result.Err(404);
     assertTrue(errResult.isErr());
     assertEquals(404, (int) errResult.unwrapErr());
   }
 
   @Test
   public void testQueryMethods() {
-    Result<String, Integer> ok = Result.ok("valid");
-    Result<String, Integer> err = Result.err(500);
+    Result<String, Integer> ok = Result.Ok("valid");
+    Result<String, Integer> err = Result.Err(500);
 
     // Test isOk()
     assertTrue(ok.isOk());
@@ -49,8 +48,8 @@ public class ResultTest {
 
   @Test
   public void testAdapterMethods() {
-    Result<String, Integer> ok = Result.ok("data");
-    Result<String, Integer> err = Result.err(404);
+    Result<String, Integer> ok = Result.Ok("data");
+    Result<String, Integer> err = Result.Err(404);
 
     // Test ok()
     assertTrue(ok.ok().isSome());
@@ -65,8 +64,8 @@ public class ResultTest {
 
   @Test
   public void testTransformationMethods() {
-    Result<Integer, String> ok = Result.ok(42);
-    Result<Integer, String> err = Result.err("failure");
+    Result<Integer, String> ok = Result.Ok(42);
+    Result<Integer, String> err = Result.Err("failure");
 
     // Test map()
     Result<String, String> mappedOk = ok.map(i -> "Value: " + i);
@@ -106,7 +105,7 @@ public class ResultTest {
     assertThrows(
         RuntimeException.class,
         () -> {
-          Result<String, Integer> err = Result.err(500);
+          Result<String, Integer> err = Result.Err(500);
           err.expect("This should throw");
         });
   }
@@ -116,7 +115,7 @@ public class ResultTest {
     assertThrows(
         RuntimeException.class,
         () -> {
-          Result<String, Integer> err = Result.err(400);
+          Result<String, Integer> err = Result.Err(400);
           err.unwrap();
         });
   }
@@ -126,7 +125,7 @@ public class ResultTest {
     assertThrows(
         RuntimeException.class,
         () -> {
-          Result<String, Integer> ok = Result.ok("valid");
+          Result<String, Integer> ok = Result.Ok("valid");
           ok.expectErr("This should throw");
         });
   }
@@ -136,19 +135,19 @@ public class ResultTest {
     assertThrows(
         RuntimeException.class,
         () -> {
-          Result<String, Integer> ok = Result.ok("valid");
+          Result<String, Integer> ok = Result.Ok("valid");
           ok.unwrapErr();
         });
   }
 
   @Test
   public void testBooleanOperations() {
-    Result<Integer, String> ok1 = Result.ok(10);
-    Result<Integer, String> err = Result.err("error");
+    Result<Integer, String> ok1 = Result.Ok(10);
+    Result<Integer, String> err = Result.Err("error");
 
-    Result<String, String> ok2 = Result.ok("other");
-    Result<Integer, Integer> ok3 = Result.ok(15);
-    Result<Integer, String> err2 = Result.err("other error");
+    Result<String, String> ok2 = Result.Ok("other");
+    Result<Integer, Integer> ok3 = Result.Ok(15);
+    Result<Integer, String> err2 = Result.Err("other error");
 
     // Test and()
     assertTrue(ok1.and(ok2).isOk());
@@ -157,10 +156,10 @@ public class ResultTest {
     assertTrue(err.and(ok2).isErr());
 
     // Test andThen()
-    Result<String, String> andThenOk = ok1.andThen(i -> Result.ok("Number: " + i));
+    Result<String, String> andThenOk = ok1.andThen(i -> Result.Ok("Number: " + i));
     assertTrue(andThenOk.isOk());
     assertEquals("Number: 10", andThenOk.unwrap());
-    assertTrue(err.andThen(i -> Result.ok("Number: " + i)).isErr());
+    assertTrue(err.andThen(i -> Result.Ok("Number: " + i)).isErr());
 
     // Test or()
     assertTrue(ok1.or(err2).isOk());
@@ -169,15 +168,15 @@ public class ResultTest {
     assertEquals(15, err.or(ok3).unwrap());
 
     // Test orElse()
-    Result<Integer, String> orElseResult = err.orElse(e -> Result.ok(e.length()));
+    Result<Integer, String> orElseResult = err.orElse(e -> Result.Ok(e.length()));
     assertTrue(orElseResult.isOk());
     assertEquals(5, (int) orElseResult.unwrap());
   }
 
   @Test
   public void testUnwrapVariants() {
-    Result<String, Integer> ok = Result.ok("success");
-    Result<String, Integer> err = Result.err(404);
+    Result<String, Integer> ok = Result.Ok("success");
+    Result<String, Integer> err = Result.Err(404);
 
     // Test unwrapOr()
     assertEquals("success", ok.unwrapOr("default"));
@@ -190,7 +189,7 @@ public class ResultTest {
 
   @Test
   public void testCopied() {
-    Result<String, Integer> original = Result.ok("original");
+    Result<String, Integer> original = Result.Ok("original");
     Result<String, Integer> copied = original.copied();
 
     assertEquals(original, copied);
@@ -199,9 +198,9 @@ public class ResultTest {
 
   @Test
   public void testFlatten() {
-    Result<Result<String, Integer>, Integer> nestedOk = Result.ok(Result.ok("nested"));
-    Result<Result<String, Integer>, Integer> nestedErr = Result.ok(Result.err(500));
-    Result<Result<String, Integer>, Integer> outerErr = Result.err(404);
+    Result<Result<String, Integer>, Integer> nestedOk = Result.Ok(Result.Ok("nested"));
+    Result<Result<String, Integer>, Integer> nestedErr = Result.Ok(Result.Err(500));
+    Result<Result<String, Integer>, Integer> outerErr = Result.Err(404);
 
     // Test flatten()
     Result<String, ?> flattenedOk = nestedOk.flatten();
@@ -227,19 +226,19 @@ public class ResultTest {
     assertThrows(
         ClassCastException.class,
         () -> {
-          Result<Result<Integer, String>, String> nested = Result.ok(Result.ok(42));
+          Result<Result<Integer, String>, String> nested = Result.Ok(Result.Ok(42));
           nested.flatten(String.class); // Should throw ClassCastException
         });
   }
 
   @Test
   public void testEquals() {
-    Result<String, Integer> ok1 = Result.ok("test");
-    Result<String, Integer> ok2 = Result.ok("test");
-    Result<String, Integer> okDiff = Result.ok("different");
-    Result<String, Integer> err1 = Result.err(404);
-    Result<String, Integer> err2 = Result.err(404);
-    Result<String, Integer> errDiff = Result.err(500);
+    Result<String, Integer> ok1 = Result.Ok("test");
+    Result<String, Integer> ok2 = Result.Ok("test");
+    Result<String, Integer> okDiff = Result.Ok("different");
+    Result<String, Integer> err1 = Result.Err(404);
+    Result<String, Integer> err2 = Result.Err(404);
+    Result<String, Integer> errDiff = Result.Err(500);
 
     assertEquals(ok1, ok2);
     assertNotEquals(ok1, okDiff);

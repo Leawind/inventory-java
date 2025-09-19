@@ -1,4 +1,4 @@
-package io.github.leawind.inventory.just;
+package io.github.leawind.inventory.just.enums;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.leawind.inventory.just.enums.Option;
 import io.github.leawind.inventory.tuple.Tuple.Tuple2;
 import org.junit.jupiter.api.Test;
 

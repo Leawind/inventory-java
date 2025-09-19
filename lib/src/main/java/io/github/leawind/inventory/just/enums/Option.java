@@ -2,6 +2,7 @@ package io.github.leawind.inventory.just.enums;
 
 import io.github.leawind.inventory.tuple.Tuple;
 import io.github.leawind.inventory.tuple.Tuple.Tuple2;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -15,43 +16,47 @@ import javax.annotation.Nullable;
  * @param <T> The type of the value if `Ok`
  */
 public final class Option<T> {
+
   /** Some value of type `T`. */
   public static <T> Option<T> some(T value) {
-    return new Option<>(value);
+    return new Option<>(true, value);
   }
 
   /** No value. */
+  @SuppressWarnings("unchecked")
   public static <T> Option<T> none() {
-    return new Option<>(null);
+    return new Option<>(false, null);
   }
 
   public static <T> Option<T> from(T value) {
     return some(value);
   }
 
+  private boolean isSome;
   private @Nullable T value;
 
-  private Option(@Nullable T value) {
+  private Option(boolean isSome, @Nullable T value) {
+    this.isSome = isSome;
     this.value = value;
   }
 
-  /////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////
   // Querying the contained values
-  /////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////
 
   /** Returns true if the option is a `Some` value. */
   public boolean isSome() {
-    return value != null;
+    return isSome;
   }
 
   /** Returns true if the option is a `Some` value and matches the given predicate. */
   public boolean isSomeAnd(Predicate<T> fn) {
-    return isSome() && fn.test(value);
+    return isSome && fn.test(value);
   }
 
   /** Returns true if the option is a `None` value. */
   public boolean isNone() {
-    return value == null;
+    return !isSome;
   }
 
   /**
@@ -59,12 +64,12 @@ public final class Option<T> {
    * given predicate.
    */
   public boolean isNoneOr(Predicate<T> fn) {
-    return isNone() || fn.test(value);
+    return !isSome || fn.test(value);
   }
 
-  /////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////
   // Getting to contained values
-  /////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////
 
   /**
    * Returns the contained `Some` value, consuming the `Option`.
@@ -72,7 +77,7 @@ public final class Option<T> {
    * @param msg The message to print if the option is `None`.
    */
   public T expect(String msg) {
-    if (isNone()) {
+    if (!isSome) {
       throw new RuntimeException(msg);
     }
     return value;
@@ -83,7 +88,7 @@ public final class Option<T> {
    * default message.
    */
   public T unwrap() {
-    if (isNone()) {
+    if (!isSome) {
       throw new RuntimeException("called `Option::unwrap()` on a `None` value");
     }
     return value;
@@ -91,7 +96,7 @@ public final class Option<T> {
 
   /** Returns the value of this Option if it is Some, otherwise returns the default value. */
   public T unwrapOr(T defaultValue) {
-    return isSome() ? value : defaultValue;
+    return isSome ? value : defaultValue;
   }
 
   /**
@@ -101,21 +106,21 @@ public final class Option<T> {
    * @return The value of the result from the supplier
    */
   public T unwrapOrElse(Supplier<T> fn) {
-    return isSome() ? value : fn.get();
+    return isSome ? value : fn.get();
   }
 
-  /////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////
   // Transforming contained values
-  /////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////
 
   /** Applies a function to the value of this Option if it is Some, otherwise returns None. */
   public <U> Option<U> map(Function<T, U> fn) {
-    return isSome() ? Option.some(fn.apply(value)) : Option.none();
+    return isSome ? Option.some(fn.apply(value)) : Option.none();
   }
 
   /** Applies a consumer to the value of this Option if it is Some. */
   public Option<T> inspect(Consumer<T> fn) {
-    if (isSome()) {
+    if (isSome) {
       fn.accept(value);
     }
     return this;
@@ -126,7 +131,7 @@ public final class Option<T> {
    * returns the default value.
    */
   public <U> U mapOr(U defaultValue, Function<T, U> fn) {
-    return isSome() ? fn.apply(value) : defaultValue;
+    return isSome ? fn.apply(value) : defaultValue;
   }
 
   /**
@@ -136,14 +141,14 @@ public final class Option<T> {
    * @param fn The function to apply to the value
    */
   public <D> D mapOrElse(D defaultValue, Function<T, D> fn) {
-    return isSome() ? fn.apply(value) : defaultValue;
+    return isSome ? fn.apply(value) : defaultValue;
   }
 
   /**
    * Converts this Option into a Result with Ok if it's Some, otherwise Err with the given error.
    */
   public <E> Result<T, E> okOr(E error) {
-    return isSome() ? Result.ok(value) : Result.err(error);
+    return isSome ? Result.Ok(value) : Result.Err(error);
   }
 
   /**
@@ -151,46 +156,47 @@ public final class Option<T> {
    * supplier.
    */
   public <E> Result<T, E> okOrElse(Supplier<E> fn) {
-    return isSome() ? Result.ok(value) : Result.err(fn.get());
+    return isSome ? Result.Ok(value) : Result.Err(fn.get());
   }
 
-  /////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////
   // Boolean operations on the values, eager and lazy
-  /////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////
 
   /** Returns `optb` if the option is `Some`, otherwise returns `self`. */
   public <U> Option<U> and(Option<U> optb) {
-    return isSome() ? optb : Option.none();
+    return isSome ? optb : Option.none();
   }
 
   public <U> Option<U> andThen(Function<T, Option<U>> fn) {
-    return isSome() ? fn.apply(value) : Option.none();
+    return isSome ? fn.apply(value) : Option.none();
   }
 
   public Option<T> filter(Predicate<T> fn) {
-    return isSome() && fn.test(value) ? this : Option.none();
+    return isSome && fn.test(value) ? this : Option.none();
   }
 
   public Option<T> or(Option<T> optb) {
-    return isSome() ? this : optb;
+    return isSome ? this : optb;
   }
 
   public Option<T> orElse(Supplier<Option<T>> fn) {
-    return isSome() ? this : fn.get();
+    return isSome ? this : fn.get();
   }
 
   public Option<T> xor(Option<T> optb) {
-    if (isSome() ^ optb.isSome()) {
-      return isSome() ? this : optb;
+    if (isSome ^ optb.isSome) {
+      return isSome ? this : optb;
     }
     return none();
   }
 
-  /////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////
   // Entry-like operations to insert v1 value and return v1 reference
-  /////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////
 
   public T insert(T value) {
+    isSome = true;
     this.value = value;
     return value;
   }
@@ -200,16 +206,21 @@ public final class Option<T> {
   }
 
   public T getOrInsertWith(Supplier<T> fn) {
-    return isNone() ? value = fn.get() : value;
+    if (!isSome) {
+      isSome = true;
+      value = fn.get();
+    }
+    return value;
   }
 
-  /////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////
   // Misc
-  /////////////////////////////////////////////////////////////////////////
+  // //////////////////////////////////////////////////////////////////////
 
   /** Takes the value out of the option, leaving `none` in its place. */
   public Option<T> take() {
     var old = copied();
+    isSome = false;
     value = null;
     return old;
   }
@@ -224,26 +235,27 @@ public final class Option<T> {
 
   public Option<T> replace(T value) {
     var old = copied();
+    this.isSome = true;
     this.value = value;
     return old;
   }
 
   public <U> Option<Tuple2<T, U>> zip(Option<U> other) {
-    return isSome() && other.isSome() ? some(Tuple.of(value, other.value)) : none();
+    return isSome && other.isSome ? some(Tuple.of(value, other.value)) : none();
   }
 
   public <U, R> Option<R> zipWith(Option<U> other, BiFunction<T, U, R> fn) {
-    return isSome() && other.isSome() ? some(fn.apply(value, other.value)) : none();
+    return isSome && other.isSome ? some(fn.apply(value, other.value)) : none();
   }
 
   @SuppressWarnings("unchecked")
   public <U> Option<U> flatten() {
-    return isSome() ? value instanceof Option<?> inner ? inner.flatten() : some((U) value) : none();
+    return isSome ? value instanceof Option<?> inner ? inner.flatten() : some((U) value) : none();
   }
 
   public <U> Option<U> flatten(Class<U> clazz) {
     var opt = flatten();
-    if (opt.isNone()) {
+    if (!opt.isSome) {
       return none();
     }
     assert opt.value != null;
@@ -254,18 +266,18 @@ public final class Option<T> {
   }
 
   public Option<T> copied() {
-    return new Option<>(value);
+    return new Option<>(isSome, value);
   }
 
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof Option<?> other) {
-      if (isSome() != other.isSome()) {
+      if (isSome != other.isSome) {
         return false;
       }
 
-      if (isSome()) {
-        return value.equals(other.value);
+      if (isSome) {
+        return Objects.equals(value, other.value);
       }
 
       return true;

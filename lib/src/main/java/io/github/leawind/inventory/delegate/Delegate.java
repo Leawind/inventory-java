@@ -192,6 +192,10 @@ public class Delegate<D> {
     return this;
   }
 
+  public void broadcast() {
+    broadcast(null);
+  }
+
   /**
    * Broadcasts data to listeners
    *
@@ -199,7 +203,7 @@ public class Delegate<D> {
    *
    * @param data The data to broadcast
    */
-  public void broadcast(D data) {
+  public void broadcast(@Nullable D data) {
     var it = handlers.listIterator();
     while (it.hasNext()) {
       var handler = it.next();
@@ -249,9 +253,9 @@ public class Delegate<D> {
     private boolean doRemoveSelf = false;
 
     /** The data associated with the event */
-    public final D data;
+    public final @Nullable D data;
 
-    protected Event(D data) {
+    protected Event(@Nullable D data) {
       this.data = data;
     }
 

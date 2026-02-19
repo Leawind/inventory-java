@@ -21,9 +21,9 @@
 
 const PACKAGE = "io.github.leawind.inventory.tuple";
 const JAVA_FILE =
-	"../lib/src/main/java/io/github/leawind/inventory/tuple/Tuple.java";
+	"lib/src/main/java/io/github/leawind/inventory/tuple/Tuple.java";
 
-const MAX = 32;
+const MAX = 16;
 
 const nums = Array
 	.from({ length: MAX + 1 }, (_, i) => i)

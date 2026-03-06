@@ -24,3 +24,6 @@ eclipse
 
 # visual studio
 .vs/
+
+.profileconfig.json
+profile.jfr

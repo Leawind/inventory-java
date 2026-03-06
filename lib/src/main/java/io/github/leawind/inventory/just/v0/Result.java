@@ -1,4 +1,4 @@
-package io.github.leawind.inventory.just.enums;
+package io.github.leawind.inventory.just.v0;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -71,7 +71,7 @@ public final class Result<T, E> {
   }
 
   public <F> Result<T, F> mapErr(Function<E, F> op) {
-    return isOk ? Result.Ok(value()) : Result.Err(op.apply(value()));
+    return isOk ? Ok(value()) : Err(op.apply(value()));
   }
 
   public Result<T, E> inspect(Consumer<T> fn) {

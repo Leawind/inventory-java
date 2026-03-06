@@ -1,4 +1,4 @@
-package io.github.leawind.inventory.just.enums;
+package io.github.leawind.inventory.just.v0.option;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.leawind.inventory.just.v0.Result;
 import org.junit.jupiter.api.Test;
 
 public class ResultTest {
@@ -26,7 +27,7 @@ public class ResultTest {
 
   @Test
   public void testQueryMethods() {
-    Result<String, Integer> ok = Result.Ok("valid");
+    Result<String, Integer> ok  = Result.Ok("valid");
     Result<String, Integer> err = Result.Err(500);
 
     // Test isOk()
@@ -48,7 +49,7 @@ public class ResultTest {
 
   @Test
   public void testAdapterMethods() {
-    Result<String, Integer> ok = Result.Ok("data");
+    Result<String, Integer> ok  = Result.Ok("data");
     Result<String, Integer> err = Result.Err(404);
 
     // Test ok()
@@ -64,15 +65,15 @@ public class ResultTest {
 
   @Test
   public void testTransformationMethods() {
-    Result<Integer, String> ok = Result.Ok(42);
+    Result<Integer, String> ok  = Result.Ok(42);
     Result<Integer, String> err = Result.Err("failure");
 
     // Test map()
-    Result<String, String> mappedOk = ok.map(i -> "Value: " + i);
+    Result<String, String> mappedOk = ok.map(i ->"Value: " + i);
     assertTrue(mappedOk.isOk());
     assertEquals("Value: 42", mappedOk.unwrap());
 
-    Result<String, String> mappedErr = err.map(i -> "Value: " + i);
+    Result<String, String> mappedErr = err.map(i ->"Value: " + i);
     assertTrue(mappedErr.isErr());
     assertEquals("failure", mappedErr.unwrapErr());
 
@@ -145,9 +146,9 @@ public class ResultTest {
     Result<Integer, String> ok1 = Result.Ok(10);
     Result<Integer, String> err = Result.Err("error");
 
-    Result<String, String> ok2 = Result.Ok("other");
-    Result<Integer, Integer> ok3 = Result.Ok(15);
-    Result<Integer, String> err2 = Result.Err("other error");
+    Result<String, String>   ok2  = Result.Ok("other");
+    Result<Integer, Integer> ok3  = Result.Ok(15);
+    Result<Integer, String>  err2 = Result.Err("other error");
 
     // Test and()
     assertTrue(ok1.and(ok2).isOk());
@@ -175,7 +176,7 @@ public class ResultTest {
 
   @Test
   public void testUnwrapVariants() {
-    Result<String, Integer> ok = Result.Ok("success");
+    Result<String, Integer> ok  = Result.Ok("success");
     Result<String, Integer> err = Result.Err(404);
 
     // Test unwrapOr()
@@ -190,7 +191,7 @@ public class ResultTest {
   @Test
   public void testCopied() {
     Result<String, Integer> original = Result.Ok("original");
-    Result<String, Integer> copied = original.copied();
+    Result<String, Integer> copied   = original.copied();
 
     assertEquals(original, copied);
     assertNotSame(original, copied);
@@ -198,9 +199,9 @@ public class ResultTest {
 
   @Test
   public void testFlatten() {
-    Result<Result<String, Integer>, Integer> nestedOk = Result.Ok(Result.Ok("nested"));
+    Result<Result<String, Integer>, Integer> nestedOk  = Result.Ok(Result.Ok("nested"));
     Result<Result<String, Integer>, Integer> nestedErr = Result.Ok(Result.Err(500));
-    Result<Result<String, Integer>, Integer> outerErr = Result.Err(404);
+    Result<Result<String, Integer>, Integer> outerErr  = Result.Err(404);
 
     // Test flatten()
     Result<String, ?> flattenedOk = nestedOk.flatten();
@@ -233,11 +234,11 @@ public class ResultTest {
 
   @Test
   public void testEquals() {
-    Result<String, Integer> ok1 = Result.Ok("test");
-    Result<String, Integer> ok2 = Result.Ok("test");
-    Result<String, Integer> okDiff = Result.Ok("different");
-    Result<String, Integer> err1 = Result.Err(404);
-    Result<String, Integer> err2 = Result.Err(404);
+    Result<String, Integer> ok1     = Result.Ok("test");
+    Result<String, Integer> ok2     = Result.Ok("test");
+    Result<String, Integer> okDiff  = Result.Ok("different");
+    Result<String, Integer> err1    = Result.Err(404);
+    Result<String, Integer> err2    = Result.Err(404);
     Result<String, Integer> errDiff = Result.Err(500);
 
     assertEquals(ok1, ok2);

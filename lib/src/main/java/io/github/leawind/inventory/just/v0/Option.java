@@ -1,4 +1,4 @@
-package io.github.leawind.inventory.just.enums;
+package io.github.leawind.inventory.just.v0;
 
 import io.github.leawind.inventory.tuple.Tuple;
 import io.github.leawind.inventory.tuple.Tuple.Tuple2;

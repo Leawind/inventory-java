@@ -167,12 +167,12 @@ public sealed interface Option<T> {
 
     @Override
     public <E> Result<T, E> okOr(E error) {
-      return Result.Ok(value);
+      return Result.ok(value);
     }
 
     @Override
     public <E> Result<T, E> okOrElse(Supplier<E> fn) {
-      return Result.Ok(value);
+      return Result.ok(value);
     }
 
     @Override
@@ -286,12 +286,12 @@ public sealed interface Option<T> {
 
     @Override
     public <E> Result<T, E> okOr(E error) {
-      return Result.Err(error);
+      return Result.err(error);
     }
 
     @Override
     public <E> Result<T, E> okOrElse(Supplier<E> fn) {
-      return Result.Err(fn.get());
+      return Result.err(fn.get());
     }
 
     @Override

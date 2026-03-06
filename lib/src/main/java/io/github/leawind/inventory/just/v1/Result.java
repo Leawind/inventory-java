@@ -14,7 +14,7 @@ import javax.annotation.Nonnull;
 public sealed interface Result<T, E> permits Result.Ok, Result.Err {
 
   @SuppressWarnings("unchecked")
-  static <T, E> Ok<T, E> Ok(T value) {
+  static <T, E> Ok<T, E> ok(T value) {
     if (value == null) {
       return (Ok<T, E>) Ok.EMPTY;
     }
@@ -22,7 +22,7 @@ public sealed interface Result<T, E> permits Result.Ok, Result.Err {
   }
 
   @SuppressWarnings("unchecked")
-  static <T, E> Err<T, E> Err(E error) {
+  static <T, E> Err<T, E> err(E error) {
     if (error == null) {
       return (Err<T, E>) Err.EMPTY;
     }
@@ -155,7 +155,7 @@ public sealed interface Result<T, E> permits Result.Ok, Result.Err {
 
     @Override
     public <U> Result<U, E> map(Function<T, U> fn) {
-      return Ok(fn.apply(value));
+      return Result.ok(fn.apply(value));
     }
 
     @Override
@@ -306,7 +306,7 @@ public sealed interface Result<T, E> permits Result.Ok, Result.Err {
 
     @Override
     public <F> Result<T, F> mapErr(Function<E, F> op) {
-      return Err(op.apply(error));
+      return Result.err(op.apply(error));
     }
 
     @Override

@@ -1,4 +1,4 @@
-package io.github.leawind.inventory.just.v1.result;
+package io.github.leawind.inventory.just.v1;
 
 import static org.junit.jupiter.api.Assertions.*;
 

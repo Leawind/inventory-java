@@ -1,4 +1,4 @@
-package io.github.leawind.inventory.just.v1.result;
+package io.github.leawind.inventory.just.v1;
 
 import io.github.leawind.inventory.just.v1.Option;
 import org.junit.jupiter.api.Test;

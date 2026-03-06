@@ -1,4 +1,4 @@
-package io.github.leawind.inventory.just.v0.option;
+package io.github.leawind.inventory.just.v0;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

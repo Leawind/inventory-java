@@ -1,6 +1,5 @@
 package io.github.leawind.inventory.math.interpolation;
 
-import org.junit.jupiter.api.Test;
 
 public class NewtonInterpolationTest {
   public static void main(String[] args) {

@@ -1,9 +1,9 @@
 package io.github.leawind.inventory.just.v1;
 
-import io.github.leawind.inventory.just.v1.Option;
-import org.junit.jupiter.api.Test;
-import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
 
 public class OptionTest {
   @Test

@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.leawind.inventory.just.v0.Option;
 import io.github.leawind.inventory.tuple.Tuple.Tuple2;
 import org.junit.jupiter.api.Test;
 

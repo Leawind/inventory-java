@@ -2,8 +2,6 @@ package io.github.leawind.inventory.just.v1;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import io.github.leawind.inventory.just.v1.JustError;
-import io.github.leawind.inventory.just.v1.Result;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

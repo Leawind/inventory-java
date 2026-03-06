@@ -1,6 +1,7 @@
 plugins {
     `java-library`
     `maven-publish`
+    id("me.champeau.jmh") version "0.7.2"
 }
 
 repositories {
@@ -13,6 +14,10 @@ dependencies {
     testRuntimeOnly(libs.junit.platform.launcher)
     // Assertion Library
     testImplementation(libs.hamcrest)
+
+    // JMH for performance testing
+    testImplementation(libs.jmh.core)
+    testAnnotationProcessor(libs.jmh.generator.annprocess)
 
     api(libs.commons.math3)
     implementation(libs.guava)

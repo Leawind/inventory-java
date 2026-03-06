@@ -18,12 +18,12 @@ class LazyTest {
             });
 
     // Initially not initialized
-    assertFalse(lazy.isInitialized());
+    assertFalse(lazy.isComputed());
     assertEquals(0, counter.get());
 
     // First get() should initialize
     String result1 = lazy.get();
-    assertTrue(lazy.isInitialized());
+    assertTrue(lazy.isComputed());
     assertEquals("test-value", result1);
     assertEquals(1, counter.get());
 
@@ -45,16 +45,16 @@ class LazyTest {
 
     // Initialize
     assertEquals(10, lazy.get());
-    assertTrue(lazy.isInitialized());
+    assertTrue(lazy.isComputed());
     assertEquals(1, counter.get());
 
     // Reset
     lazy.reset();
-    assertFalse(lazy.isInitialized());
+    assertFalse(lazy.isComputed());
 
     // Get again should re-initialize
     assertEquals(20, lazy.get());
-    assertTrue(lazy.isInitialized());
+    assertTrue(lazy.isComputed());
     assertEquals(2, counter.get());
   }
 
@@ -65,21 +65,21 @@ class LazyTest {
 
     // First cycle
     assertEquals("value-1", lazy.get());
-    assertTrue(lazy.isInitialized());
+    assertTrue(lazy.isComputed());
 
     lazy.reset();
-    assertFalse(lazy.isInitialized());
+    assertFalse(lazy.isComputed());
 
     // Second cycle
     assertEquals("value-2", lazy.get());
-    assertTrue(lazy.isInitialized());
+    assertTrue(lazy.isComputed());
 
     lazy.reset();
-    assertFalse(lazy.isInitialized());
+    assertFalse(lazy.isComputed());
 
     // Third cycle
     assertEquals("value-3", lazy.get());
-    assertTrue(lazy.isInitialized());
+    assertTrue(lazy.isComputed());
 
     assertEquals(3, counter.get());
   }
@@ -88,9 +88,9 @@ class LazyTest {
   void testNullValue() {
     Lazy<String> lazy = new Lazy<>(() -> null);
 
-    assertFalse(lazy.isInitialized());
+    assertFalse(lazy.isComputed());
     assertNull(lazy.get());
-    assertFalse(lazy.isInitialized());
+    assertFalse(lazy.isComputed());
 
     // Subsequent calls should return same null
     assertNull(lazy.get());
@@ -106,10 +106,10 @@ class LazyTest {
               return sb;
             });
 
-    assertFalse(lazy.isInitialized());
+    assertFalse(lazy.isComputed());
 
     StringBuilder result1 = lazy.get();
-    assertTrue(lazy.isInitialized());
+    assertTrue(lazy.isComputed());
     assertEquals("Hello", result1.toString());
 
     // Modify the returned object
@@ -129,7 +129,7 @@ class LazyTest {
               throw new RuntimeException("Supplier error");
             });
 
-    assertFalse(lazy.isInitialized());
+    assertFalse(lazy.isComputed());
 
     // First call should throw
     try {
@@ -139,7 +139,7 @@ class LazyTest {
     }
 
     // isInitialized should remain false since initialization failed
-    assertFalse(lazy.isInitialized());
+    assertFalse(lazy.isComputed());
 
     // Subsequent calls should retry initialization
     try {
@@ -147,6 +147,6 @@ class LazyTest {
     } catch (RuntimeException e) {
       assertEquals("Supplier error", e.getMessage());
     }
-    assertFalse(lazy.isInitialized());
+    assertFalse(lazy.isComputed());
   }
 }

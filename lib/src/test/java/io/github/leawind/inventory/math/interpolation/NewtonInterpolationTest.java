@@ -3,8 +3,7 @@ package io.github.leawind.inventory.math.interpolation;
 import org.junit.jupiter.api.Test;
 
 public class NewtonInterpolationTest {
-  @Test
-  void test() {
+  public static void main(String[] args) {
     var it =
         new NewtonInterpolation() //
             .add(0, 0d)

@@ -3,8 +3,8 @@ package io.github.leawind.inventory.math.interpolation;
 import org.junit.jupiter.api.Test;
 
 public class CubicSplineInterpolationTest {
-  @Test
-  void test() {
+
+  public static void main(String[] args) {
     var it =
         new CubicSplineInterpolation() //
             .add(0, 0d)

@@ -1,7 +1,6 @@
 package io.github.leawind.inventory.just.v0;
 
 import io.github.leawind.inventory.tuple.Tuple;
-import io.github.leawind.inventory.tuple.Tuple.Tuple2;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -240,7 +239,7 @@ public final class Option<T> {
     return old;
   }
 
-  public <U> Option<Tuple2<T, U>> zip(Option<U> other) {
+  public <U> Option<Tuple._2<T, U>> zip(Option<U> other) {
     return isSome && other.isSome ? some(Tuple.of(value, other.value)) : none();
   }
 

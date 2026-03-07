@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.leawind.inventory.tuple.Tuple.Tuple2;
+import io.github.leawind.inventory.tuple.Tuple;
 import org.junit.jupiter.api.Test;
 
 public class OptionTest {
@@ -190,9 +190,9 @@ public class OptionTest {
     Option<Integer> noneInt = Option.none();
 
     // Test zip()
-    Option<Tuple2<Integer, String>> zipped = someInt.zip(someStr);
+    Option<Tuple._2<Integer, String>> zipped = someInt.zip(someStr);
     assertTrue(zipped.isSome());
-    Tuple2<Integer, String> tuple = zipped.unwrap();
+    Tuple._2<Integer, String> tuple = zipped.unwrap();
     assertEquals(5, (int) tuple.v1());
     assertEquals("hello", tuple.v2());
 

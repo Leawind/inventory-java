@@ -193,8 +193,8 @@ public class OptionTest {
     Option<Tuple._2<Integer, String>> zipped = someInt.zip(someStr);
     assertTrue(zipped.isSome());
     Tuple._2<Integer, String> tuple = zipped.unwrap();
-    assertEquals(5, (int) tuple.v1());
-    assertEquals("hello", tuple.v2());
+    assertEquals(5, (int) tuple.$0());
+    assertEquals("hello", tuple.$1());
 
     assertTrue(someInt.zip(noneInt).isNone());
     assertTrue(noneInt.zip(someStr).isNone());

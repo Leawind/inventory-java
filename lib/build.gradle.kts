@@ -1,7 +1,10 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     `java-library`
     `maven-publish`
     id("me.champeau.jmh") version "0.7.2"
+    id("com.gradleup.shadow") version "9.3.1"
 }
 
 repositories {
@@ -19,7 +22,12 @@ dependencies {
     testImplementation(libs.jmh.core)
     testAnnotationProcessor(libs.jmh.generator.annprocess)
 
-    implementation(libs.guava)
+    compileOnly(libs.guava)
+}
+
+tasks.named<ShadowJar>("shadowJar") {
+    archiveClassifier = "shadow"
+    minimize()
 }
 
 java {
@@ -60,7 +68,6 @@ publishing {
             version = project.properties["lib_version"] as String
 
             from(components["java"])
-
             pom {
                 url = "https://github.com/Leawind/inventory-java"
 

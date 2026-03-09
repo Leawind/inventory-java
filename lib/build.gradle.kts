@@ -19,7 +19,6 @@ dependencies {
     testImplementation(libs.jmh.core)
     testAnnotationProcessor(libs.jmh.generator.annprocess)
 
-    api(libs.commons.math3)
     implementation(libs.guava)
 }
 

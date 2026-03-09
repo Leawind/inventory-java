@@ -86,9 +86,9 @@ public class DelegateTest {
 
     delegate
         .addListener(
-            e -> {
+            (e, ctrl) -> {
               s.append("A");
-              e.stop();
+              ctrl.stop();
             })
         .addListener(e -> s.append("B"));
 
@@ -102,9 +102,9 @@ public class DelegateTest {
 
     delegate
         .addListener(
-            e -> {
+            (e, ctrl) -> {
               s.append("A");
-              e.removeSelf();
+              ctrl.removeSelf();
             })
         .addListener(e -> s.append("B"));
 

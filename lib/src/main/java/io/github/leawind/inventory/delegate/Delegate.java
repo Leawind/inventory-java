@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
@@ -21,7 +20,7 @@ public class Delegate<D> {
   public String name;
 
   /** Event handlers from high to low priority */
-  protected final List<Handler> handlers = new LinkedList<>();
+  protected final List<Handler<D>> handlers = new LinkedList<>();
 
   /**
    * Map: key => handler
@@ -29,7 +28,7 @@ public class Delegate<D> {
    * <p>This map is used to quickly look up a handler by its key. Handlers with `null` key are not
    * in this map
    */
-  private final Map<Constable, Handler> key2handlerMap = new HashMap<>();
+  private final Map<Constable, Handler<D>> key2handlerMap = new HashMap<>();
 
   /** Creates an unnamed delegate */
   public Delegate() {
@@ -70,7 +69,7 @@ public class Delegate<D> {
    * @param key The key of the listener
    * @return The listener if found, or `null` otherwise
    */
-  public @Nullable Consumer<Event> getListener(Constable key) {
+  public @Nullable Consumer<Event<D>> getListener(Constable key) {
     var handler = key2handlerMap.get(key);
     if (handler == null) {
       return null;
@@ -79,28 +78,28 @@ public class Delegate<D> {
   }
 
   /** Add a listener that will be executed once and then removed */
-  public Delegate<D> addOnce(Consumer<Event> listener) {
-    return addHandler(new Handler(null, listener, DEFAULT_PRIORITY, true));
+  public Delegate<D> addOnce(Consumer<Event<D>> listener) {
+    return addHandler(new Handler<>(null, listener, DEFAULT_PRIORITY, true));
   }
 
   /** Set a one-time listener with a key (replaces existing if key exists) */
-  public Delegate<D> setOnce(Constable key, Consumer<Event> listener) {
-    return addHandler(new Handler(key, listener, DEFAULT_PRIORITY, true));
+  public Delegate<D> setOnce(Constable key, Consumer<Event<D>> listener) {
+    return addHandler(new Handler<>(key, listener, DEFAULT_PRIORITY, true));
   }
 
   /** Set a one-time listener with a key (replaces existing if key exists) */
-  public Delegate<D> setOnce(Constable key, Consumer<Event> listener, int priority) {
-    return addHandler(new Handler(key, listener, priority, true));
+  public Delegate<D> setOnce(Constable key, Consumer<Event<D>> listener, int priority) {
+    return addHandler(new Handler<>(key, listener, priority, true));
   }
 
   /** Add a new listener with {@link Delegate#DEFAULT_PRIORITY} */
-  public Delegate<D> addListener(Consumer<Event> listener) {
+  public Delegate<D> addListener(Consumer<Event<D>> listener) {
     return addListener(listener, DEFAULT_PRIORITY);
   }
 
   /** Add a listener with the specified priority */
-  public Delegate<D> addListener(Consumer<Event> listener, int priority) {
-    return addHandler(new Handler(null, listener, priority, false));
+  public Delegate<D> addListener(Consumer<Event<D>> listener, int priority) {
+    return addHandler(new Handler<>(null, listener, priority, false));
   }
 
   /**
@@ -108,7 +107,7 @@ public class Delegate<D> {
    *
    * @see Delegate#setListener(Constable, Consumer,int)
    */
-  public Delegate<D> setListener(Constable key, Consumer<Event> listener) {
+  public Delegate<D> setListener(Constable key, Consumer<Event<D>> listener) {
     return setListener(key, listener, DEFAULT_PRIORITY);
   }
 
@@ -119,11 +118,11 @@ public class Delegate<D> {
    * @param listener The listener function
    * @param priority Priority of the listener, higher executes first
    */
-  public Delegate<D> setListener(Constable key, Consumer<Event> listener, int priority) {
+  public Delegate<D> setListener(Constable key, Consumer<Event<D>> listener, int priority) {
     if (key == null) {
       throw new IllegalArgumentException("Listener key must not be null.");
     }
-    return addHandler(new Handler(key, listener, priority, false));
+    return addHandler(new Handler<>(key, listener, priority, false));
   }
 
   /**
@@ -133,7 +132,7 @@ public class Delegate<D> {
    *
    * @param handler The handler to add
    */
-  protected Delegate<D> addHandler(Handler handler) {
+  protected Delegate<D> addHandler(Handler<D> handler) {
     // If the handler has a key, replace the existing handler with the same key
     if (handler.key != null) {
       if (key2handlerMap.containsKey(handler.key)) {
@@ -177,7 +176,7 @@ public class Delegate<D> {
    *
    * @param listener The listener to remove.
    */
-  public Delegate<D> removeListener(Consumer<Event> listener) {
+  public Delegate<D> removeListener(Consumer<Event<D>> listener) {
     var it = handlers.listIterator();
     while (it.hasNext()) {
       var handler = it.next();
@@ -207,7 +206,7 @@ public class Delegate<D> {
     var it = handlers.listIterator();
     while (it.hasNext()) {
       var handler = it.next();
-      var event = new Event(data);
+      var event = new Event<>(data);
 
       if (handler.once) {
         event.removeSelf();
@@ -239,12 +238,12 @@ public class Delegate<D> {
    * {@code Consumer<Delegate.Event<String>> listener = e -> s.append(e.data);}
    * </pre>
    */
-  public Consumer<Event> listener(Consumer<Event> listener) {
+  public Consumer<Event<D>> listener(Consumer<Event<D>> listener) {
     return listener;
   }
 
   /** Event object passed to delegate listeners */
-  public class Event {
+  public static class Event<D> {
 
     /** Whether event propagation is going to be stopped */
     private boolean doStop = false;
@@ -284,26 +283,6 @@ public class Delegate<D> {
     }
   }
 
-  /** Event handler */
-  protected class Handler {
-    protected final @Nullable Constable key;
-    protected Consumer<Event> listener;
-    protected final int priority;
-    protected final boolean once;
-
-    /**
-     * @param key Optional unique key for the handler
-     * @param listener The listener function to be called
-     * @param priority Priority of the handler (higher executes first)
-     * @param once Whether the handler is one-time
-     * @throws NullPointerException if listener is null
-     */
-    protected Handler(@Nullable Constable key, Consumer<Event> listener, int priority, boolean once)
-        throws NullPointerException {
-      this.key = key;
-      this.listener = Objects.requireNonNull(listener);
-      this.priority = priority;
-      this.once = once;
-    }
-  }
+  protected record Handler<D>(
+      @Nullable Constable key, Consumer<Event<D>> listener, int priority, boolean once) {}
 }

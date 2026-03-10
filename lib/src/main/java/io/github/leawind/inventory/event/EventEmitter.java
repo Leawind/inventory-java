@@ -62,10 +62,22 @@ public class EventEmitter<E> {
     return subscription.listener;
   }
 
+  /**
+   * Adds a one-time keyless listener with default priority. The listener is automatically removed
+   * after its first invocation.
+   *
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> once(Listener.Simple<E> listener) {
     return once((Listener<E>) listener);
   }
 
+  /**
+   * Adds a one-time keyless listener with default priority. The listener is automatically removed
+   * after its first invocation.
+   *
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> once(Listener.Controlled<E> listener) {
     return once((Listener<E>) listener);
   }
@@ -80,10 +92,22 @@ public class EventEmitter<E> {
     return subscribe(new Subscription<>(null, listener, DEFAULT_PRIORITY, true));
   }
 
+  /**
+   * Sets a one-time listener identified by {@code key} with default priority. Replaces any existing
+   * listener with the same key.
+   *
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> once(Constable key, Listener.Simple<E> listener) {
     return once(key, (Listener<E>) listener);
   }
 
+  /**
+   * Sets a one-time listener identified by {@code key} with default priority. Replaces any existing
+   * listener with the same key.
+   *
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> once(Constable key, Listener.Controlled<E> listener) {
     return once(key, (Listener<E>) listener);
   }
@@ -98,10 +122,24 @@ public class EventEmitter<E> {
     return subscribe(new Subscription<>(key, listener, DEFAULT_PRIORITY, true));
   }
 
+  /**
+   * Sets a one-time listener identified by {@code key} with the given priority. Replaces any
+   * existing listener with the same key.
+   *
+   * @param priority higher value executes first
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> once(Constable key, Listener.Simple<E> listener, int priority) {
     return once(key, (Listener<E>) listener, priority);
   }
 
+  /**
+   * Sets a one-time listener identified by {@code key} with the given priority. Replaces any
+   * existing listener with the same key.
+   *
+   * @param priority higher value executes first
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> once(Constable key, Listener.Controlled<E> listener, int priority) {
     return once(key, (Listener<E>) listener, priority);
   }
@@ -117,10 +155,20 @@ public class EventEmitter<E> {
     return subscribe(new Subscription<>(key, listener, priority, true));
   }
 
+  /**
+   * Adds a persistent keyless listener with default priority.
+   *
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> on(Listener.Simple<E> listener) {
     return on((Listener<E>) listener);
   }
 
+  /**
+   * Adds a persistent keyless listener with default priority.
+   *
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> on(Listener.Controlled<E> listener) {
     return on((Listener<E>) listener);
   }
@@ -134,10 +182,22 @@ public class EventEmitter<E> {
     return on(listener, DEFAULT_PRIORITY);
   }
 
+  /**
+   * Adds a persistent keyless listener with the given priority.
+   *
+   * @param priority higher value executes first
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> on(Listener.Simple<E> listener, int priority) {
     return on((Listener<E>) listener, priority);
   }
 
+  /**
+   * Adds a persistent keyless listener with the given priority.
+   *
+   * @param priority higher value executes first
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> on(Listener.Controlled<E> listener, int priority) {
     return on((Listener<E>) listener, priority);
   }
@@ -152,10 +212,24 @@ public class EventEmitter<E> {
     return subscribe(new Subscription<>(null, listener, priority, false));
   }
 
+  /**
+   * Sets a persistent listener identified by {@code key} with default priority. Replaces any
+   * existing listener with the same key.
+   *
+   * @param key unique, non-null identifier for the listener
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> on(Constable key, Listener.Simple<E> listener) {
     return on(key, (Listener<E>) listener);
   }
 
+  /**
+   * Sets a persistent listener identified by {@code key} with default priority. Replaces any
+   * existing listener with the same key.
+   *
+   * @param key unique, non-null identifier for the listener
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> on(Constable key, Listener.Controlled<E> listener) {
     return on(key, (Listener<E>) listener);
   }
@@ -171,10 +245,26 @@ public class EventEmitter<E> {
     return on(key, listener, DEFAULT_PRIORITY);
   }
 
+  /**
+   * Sets a persistent listener identified by {@code key} with the given priority. Replaces any
+   * existing listener with the same key.
+   *
+   * @param key unique, non-null identifier for the listener
+   * @param priority higher value executes first
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> on(Constable key, Listener.Simple<E> listener, int priority) {
     return on(key, (Listener<E>) listener, priority);
   }
 
+  /**
+   * Sets a persistent listener identified by {@code key} with the given priority. Replaces any
+   * existing listener with the same key.
+   *
+   * @param key unique, non-null identifier for the listener
+   * @param priority higher value executes first
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> on(Constable key, Listener.Controlled<E> listener, int priority) {
     return on(key, (Listener<E>) listener, priority);
   }

@@ -29,8 +29,6 @@ public class EventEmitter<E> {
    */
   protected final Map<Constable, Subscription<E>> subscriptionsByKey = new HashMap<>();
 
-  public EventEmitter() {}
-
   /**
    * Removes all subscribed listeners.
    *

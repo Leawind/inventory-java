@@ -1,4 +1,4 @@
-package io.github.leawind.inventory.just.v1;
+package io.github.leawind.inventory.just;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,9 +33,9 @@ public class OptionTest {
     Option<String> none = Option.none();
     assertFalse(none.isSome());
     assertTrue(none.isNone());
-    assertThrows(io.github.leawind.inventory.just.v1.JustError.class, none::unwrap);
+    assertThrows(JustError.class, none::unwrap);
     assertThrows(
-        io.github.leawind.inventory.just.v1.JustError.class, () -> none.expect("Expected failure"));
+	    JustError.class, () -> none.expect("Expected failure"));
     assertEquals("default", none.unwrapOr("default"));
     assertEquals("default", none.unwrapOrElse(() -> "default"));
   }

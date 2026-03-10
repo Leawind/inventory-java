@@ -1,4 +1,4 @@
-package io.github.leawind.inventory.just.v1;
+package io.github.leawind.inventory.just;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -20,7 +20,7 @@ public class EventEmitterTest {
 
     eventEmitter
         .on(e -> s.append("A"))
-        .once(e -> s.append("B"))
+        .once(() -> s.append("B"))
         .once(e -> s.append("C"))
         .once("a key", e -> s.append("D"))
         .once("a key", e -> s.append("E"));
@@ -37,9 +37,9 @@ public class EventEmitterTest {
 
     eventEmitter
         .on(e -> s.append('A'), 1)
-        .on(e -> s.append('B'), 2)
+        .on(() -> s.append('B'), 2)
         .on(e -> s.append('C'), 2)
-        .on(e -> s.append('D'), 1);
+        .on(() -> s.append('D'), 1);
 
     eventEmitter.emit(null);
     assertEquals("BCAD", s.toString());

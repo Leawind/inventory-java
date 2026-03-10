@@ -68,7 +68,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Listener.Simple<E> listener) {
+  public EventEmitter<E> once(Listener.Unnamed<E> listener) {
     return once((Listener<E>) listener);
   }
 
@@ -78,7 +78,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Listener.Controlled<E> listener) {
+  public EventEmitter<E> once(Listener.Simple<E> listener) {
     return once((Listener<E>) listener);
   }
 
@@ -98,7 +98,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.Simple<E> listener) {
+  public EventEmitter<E> once(Constable key, Listener.Unnamed<E> listener) {
     return once(key, (Listener<E>) listener);
   }
 
@@ -108,7 +108,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.Controlled<E> listener) {
+  public EventEmitter<E> once(Constable key, Listener.Simple<E> listener) {
     return once(key, (Listener<E>) listener);
   }
 
@@ -129,7 +129,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.Simple<E> listener, int priority) {
+  public EventEmitter<E> once(Constable key, Listener.Unnamed<E> listener, int priority) {
     return once(key, (Listener<E>) listener, priority);
   }
 
@@ -140,7 +140,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.Controlled<E> listener, int priority) {
+  public EventEmitter<E> once(Constable key, Listener.Simple<E> listener, int priority) {
     return once(key, (Listener<E>) listener, priority);
   }
 
@@ -160,7 +160,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Listener.Simple<E> listener) {
+  public EventEmitter<E> on(Listener.Unnamed<E> listener) {
     return on((Listener<E>) listener);
   }
 
@@ -169,7 +169,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Listener.Controlled<E> listener) {
+  public EventEmitter<E> on(Listener.Simple<E> listener) {
     return on((Listener<E>) listener);
   }
 
@@ -188,7 +188,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Listener.Simple<E> listener, int priority) {
+  public EventEmitter<E> on(Listener.Unnamed<E> listener, int priority) {
     return on((Listener<E>) listener, priority);
   }
 
@@ -198,7 +198,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Listener.Controlled<E> listener, int priority) {
+  public EventEmitter<E> on(Listener.Simple<E> listener, int priority) {
     return on((Listener<E>) listener, priority);
   }
 
@@ -219,7 +219,7 @@ public class EventEmitter<E> {
    * @param key unique, non-null identifier for the listener
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.Simple<E> listener) {
+  public EventEmitter<E> on(Constable key, Listener.Unnamed<E> listener) {
     return on(key, (Listener<E>) listener);
   }
 
@@ -230,7 +230,7 @@ public class EventEmitter<E> {
    * @param key unique, non-null identifier for the listener
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.Controlled<E> listener) {
+  public EventEmitter<E> on(Constable key, Listener.Simple<E> listener) {
     return on(key, (Listener<E>) listener);
   }
 
@@ -253,7 +253,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.Simple<E> listener, int priority) {
+  public EventEmitter<E> on(Constable key, Listener.Unnamed<E> listener, int priority) {
     return on(key, (Listener<E>) listener, priority);
   }
 
@@ -265,7 +265,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.Controlled<E> listener, int priority) {
+  public EventEmitter<E> on(Constable key, Listener.Simple<E> listener, int priority) {
     return on(key, (Listener<E>) listener, priority);
   }
 
@@ -380,37 +380,33 @@ public class EventEmitter<E> {
     return listener;
   }
 
-  /** Sugar method for listener declaration */
-  public Listener<E> listener(Listener.Controlled<E> listener) {
-    return listener;
-  }
-
   /**
    * A listener that receives an event and an optional {@link EventControl}.
    *
-   * <p>Use {@link Simple} when no propagation control is needed, or {@link Controlled} to call
-   * {@code stop()} / {@code unsubscribe()} during handling.
+   * <p>Use {@link Simple} when no propagation control is needed, or {@link Listener} to call {@code
+   * stop()} / {@code unsubscribe()} during handling.
    *
    * @param <E> the event type
    */
-  public sealed interface Listener<E> permits Listener.Simple, Listener.Controlled {
-    /** Handles the event without control access. */
-    void on(E event);
-
+  public interface Listener<E> {
     /** Handles the event with access to propagation control. */
     void on(E event, EventControl control);
 
-    /** Listener variant that does not require propagation control. */
-    non-sealed interface Simple<E> extends Listener<E> {
+    interface Unnamed<E> extends Listener<E> {
+      void on();
+
       default void on(E event, EventControl control) {
-        on(event);
+        on();
       }
     }
 
-    /** Listener variant that optionally uses propagation control. */
-    non-sealed interface Controlled<E> extends Listener<E> {
-      default void on(E event) {
-        on(event, new EventControl());
+    /** Listener variant that does not require propagation control. */
+    interface Simple<E> extends Listener<E> {
+
+      void on(E event);
+
+      default void on(E event, EventControl control) {
+        on(event);
       }
     }
   }
@@ -418,7 +414,7 @@ public class EventEmitter<E> {
   /**
    * Controls event propagation and listener lifecycle within a single emission.
    *
-   * <p>Passed to {@link Listener.Controlled} during {@link EventEmitter#emit}.
+   * <p>Passed to {@link Listener} during {@link EventEmitter#emit}.
    */
   public static class EventControl {
 

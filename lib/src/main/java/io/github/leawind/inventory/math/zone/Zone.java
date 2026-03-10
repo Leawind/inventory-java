@@ -1,7 +1,7 @@
 package io.github.leawind.inventory.math.zone;
 
 import java.util.Arrays;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Zone represents a range of values defined by a minimum and maximum value.

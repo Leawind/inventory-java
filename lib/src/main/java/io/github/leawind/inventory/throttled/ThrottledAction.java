@@ -7,19 +7,19 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class ThrottledAction<T> {
-  private final @Nonnull Supplier<T> actionFn;
+  private final @NonNull Supplier<T> actionFn;
   private final long interval;
 
   private long lastExecuteTimeMillis;
   private @Nullable ScheduledFuture<?> scheduledFuture;
   private @Nullable CompletableFuture<T> currentFuture;
-  private final @Nonnull ScheduledExecutorService scheduler;
+  private final @NonNull ScheduledExecutorService scheduler;
 
-  public ThrottledAction(@Nonnull Supplier<T> actionFn, long interval) {
+  public ThrottledAction(@NonNull Supplier<T> actionFn, long interval) {
     this(actionFn, interval, Executors.newSingleThreadScheduledExecutor());
   }
 
@@ -31,7 +31,7 @@ public class ThrottledAction<T> {
    * @param scheduler The scheduler to use for executing the action
    */
   public ThrottledAction(
-      @Nonnull Supplier<T> actionFn, long interval, @Nonnull ScheduledExecutorService scheduler) {
+      @NonNull Supplier<T> actionFn, long interval, @NonNull ScheduledExecutorService scheduler) {
     this.actionFn = actionFn;
     this.interval = interval;
     this.scheduler = scheduler;
@@ -50,7 +50,7 @@ public class ThrottledAction<T> {
   }
 
   /// Schedule the action to execute after the interval has passed
-  public synchronized @Nonnull CompletableFuture<T> urge() {
+  public synchronized @NonNull CompletableFuture<T> urge() {
     long now = System.currentTimeMillis();
     long elapsed = now - lastExecuteTimeMillis;
 

@@ -22,7 +22,8 @@ dependencies {
     testImplementation(libs.jmh.core)
     testAnnotationProcessor(libs.jmh.generator.annprocess)
 
-    compileOnly(libs.guava)
+    // compileOnly(libs.guava)
+    compileOnly(libs.jspecify)
 }
 
 tasks.named<ShadowJar>("shadowJar") {

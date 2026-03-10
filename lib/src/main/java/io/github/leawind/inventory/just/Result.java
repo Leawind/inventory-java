@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import javax.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * @see <a href="https://doc.rust-lang.org/core/result/enum.Result.html">`Result` on
@@ -239,7 +239,7 @@ public sealed interface Result<T, E> permits Result.Ok, Result.Err {
       return value;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public String toString() {
       return "Ok(" + value + ")";
@@ -375,7 +375,7 @@ public sealed interface Result<T, E> permits Result.Ok, Result.Err {
       return op.apply(error);
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public String toString() {
       return "Err(" + error + ")";

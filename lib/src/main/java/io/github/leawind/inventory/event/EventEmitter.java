@@ -7,6 +7,15 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
+/**
+ * A generic event emitter that supports priority-ordered listener dispatch, keyed listener
+ * management, and one-time subscriptions.
+ *
+ * <p>Listeners are executed in descending priority order. Listeners with the same key replace each
+ * other. Keyless listeners accumulate.
+ *
+ * @param <E> The event type
+ */
 public class EventEmitter<E> {
   protected static final int DEFAULT_PRIORITY = 0;
 
@@ -14,16 +23,19 @@ public class EventEmitter<E> {
   protected final List<Subscription<E>> subscriptions = new LinkedList<>();
 
   /**
-   * Map: key => subscription
+   * Lookup map from key to subscription.
    *
-   * <p>This map is used to look up a subscription by its key. Subscriptions with `null` key are not
-   * in this map
+   * <p>Keyless subscriptions ({@code null} key) are not included.
    */
   protected final Map<Constable, Subscription<E>> subscriptionsByKey = new HashMap<>();
 
   public EventEmitter() {}
 
-  /** Remove all listeners */
+  /**
+   * Removes all subscribed listeners.
+   *
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> clear() {
     subscriptions.clear();
     subscriptionsByKey.clear();
@@ -31,22 +43,18 @@ public class EventEmitter<E> {
   }
 
   /**
-   * Check if a listener with the given key exists
+   * Returns whether a listener with the given key exists.
    *
-   * @param key The key of the listener. If `null`, it always return false
-   * @return true if the listener exists, false otherwise
+   * @param key the lookup key; always returns {@code false} if {@code null}
    */
   public boolean hasKey(Constable key) {
     return subscriptionsByKey.containsKey(key);
   }
 
   /**
-   * Retrieves the listener associated with the given key
+   * Returns the listener associated with the given key, or {@code null} if not found.
    *
-   * <p>If the given key is `null`, it returns `null`
-   *
-   * @param key The key of the listener
-   * @return The listener if found, or `null` otherwise
+   * @param key the lookup key
    */
   public @Nullable Listener<E> getListener(Constable key) {
     var subscription = subscriptionsByKey.get(key);
@@ -64,7 +72,12 @@ public class EventEmitter<E> {
     return once((Listener<E>) listener);
   }
 
-  /** Add a listener that will be executed once and then removed */
+  /**
+   * Adds a one-time keyless listener with default priority. The listener is automatically removed
+   * after its first invocation.
+   *
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> once(Listener<E> listener) {
     return subscribe(new Subscription<>(null, listener, DEFAULT_PRIORITY, true));
   }
@@ -77,7 +90,12 @@ public class EventEmitter<E> {
     return once(key, (Listener<E>) listener);
   }
 
-  /** Set a one-time listener with a key (replaces existing if key exists) */
+  /**
+   * Sets a one-time listener identified by {@code key} with default priority. Replaces any existing
+   * listener with the same key.
+   *
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> once(Constable key, Listener<E> listener) {
     return subscribe(new Subscription<>(key, listener, DEFAULT_PRIORITY, true));
   }
@@ -90,7 +108,13 @@ public class EventEmitter<E> {
     return once(key, (Listener<E>) listener, priority);
   }
 
-  /** Set a one-time listener with a key (replaces existing if key exists) */
+  /**
+   * Sets a one-time listener identified by {@code key} with the given priority. Replaces any
+   * existing listener with the same key.
+   *
+   * @param priority higher value executes first
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> once(Constable key, Listener<E> listener, int priority) {
     return subscribe(new Subscription<>(key, listener, priority, true));
   }
@@ -103,7 +127,11 @@ public class EventEmitter<E> {
     return on((Listener<E>) listener);
   }
 
-  /** Add a new listener with {@link EventEmitter#DEFAULT_PRIORITY} */
+  /**
+   * Adds a persistent keyless listener with default priority.
+   *
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> on(Listener<E> listener) {
     return on(listener, DEFAULT_PRIORITY);
   }
@@ -116,7 +144,12 @@ public class EventEmitter<E> {
     return on((Listener<E>) listener, priority);
   }
 
-  /** Add a listener with the specified priority */
+  /**
+   * Adds a persistent keyless listener with the given priority.
+   *
+   * @param priority higher value executes first
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> on(Listener<E> listener, int priority) {
     return subscribe(new Subscription<>(null, listener, priority, false));
   }
@@ -129,7 +162,13 @@ public class EventEmitter<E> {
     return on(key, (Listener<E>) listener);
   }
 
-  /** Set a listener with a key (replaces existing if key exists), use default priority */
+  /**
+   * Sets a persistent listener identified by {@code key} with default priority. Replaces any
+   * existing listener with the same key.
+   *
+   * @param key unique, non-null identifier for the listener
+   * @return this emitter (for chaining)
+   */
   public EventEmitter<E> on(Constable key, Listener<E> listener) {
     return on(key, listener, DEFAULT_PRIORITY);
   }
@@ -143,11 +182,12 @@ public class EventEmitter<E> {
   }
 
   /**
-   * Set a listener with a key (replaces existing if key exists)
+   * Sets a persistent listener identified by {@code key} with the given priority. Replaces any
+   * existing listener with the same key.
    *
-   * @param key Unique key for the listener
-   * @param listener The listener function
-   * @param priority Priority of the listener, higher executes first
+   * @param key unique, non-null identifier for the listener
+   * @param priority higher value executes first
+   * @return this emitter (for chaining)
    */
   public EventEmitter<E> on(Constable key, Listener<E> listener, int priority) {
     if (key == null) {
@@ -179,11 +219,10 @@ public class EventEmitter<E> {
   }
 
   /**
-   * Remove listeners by key
+   * Removes the listener associated with the given key. Does nothing if the key is not found.
    *
-   * <p>If the key doesn't exist, it does nothing
-   *
-   * @param key The key of the listener to remove.
+   * @param key the key of the listener to remove
+   * @return this emitter (for chaining)
    */
   public EventEmitter<E> off(Constable key) {
     var subscription = this.subscriptionsByKey.remove(key);
@@ -194,11 +233,11 @@ public class EventEmitter<E> {
   }
 
   /**
-   * Removes first occurrence of listener
+   * Removes the first (highest-priority) occurrence of the given listener instance. Does nothing if
+   * the listener is not subscribed.
    *
-   * <p>Only removes highest-priority instance if duplicate
-   *
-   * @param listener The listener to remove.
+   * @param listener the listener to remove
+   * @return this emitter (for chaining)
    */
   public EventEmitter<E> off(Listener<E> listener) {
     var it = subscriptions.listIterator();
@@ -215,16 +254,17 @@ public class EventEmitter<E> {
     return this;
   }
 
+  /** Emits an event with a {@code null} payload. */
   public void emit() {
     emit(null);
   }
 
   /**
-   * Emits an event
+   * Emits an event, invoking all listeners in descending priority order. Listeners marked for
+   * removal (via {@link EventControl#unsubscribe()}) are removed after execution. Propagation stops
+   * if {@link EventControl#stop()} is called.
    *
-   * <p>Execution order: High -> Low priority
-   *
-   * @param event The event object
+   * @param event the event payload; may be {@code null}
    */
   public void emit(@Nullable E event) {
     var it = subscriptions.listIterator();
@@ -247,26 +287,39 @@ public class EventEmitter<E> {
     }
   }
 
-  /** Syntax sugar for listener declaration */
+  /** Sugar method for listener declaration */
   public Listener<E> listener(Listener.Simple<E> listener) {
     return listener;
   }
 
+  /** Sugar method for listener declaration */
   public Listener<E> listener(Listener.Controlled<E> listener) {
     return listener;
   }
 
+  /**
+   * A listener that receives an event and an optional {@link EventControl}.
+   *
+   * <p>Use {@link Simple} when no propagation control is needed, or {@link Controlled} to call
+   * {@code stop()} / {@code unsubscribe()} during handling.
+   *
+   * @param <E> the event type
+   */
   public sealed interface Listener<E> permits Listener.Simple, Listener.Controlled {
+    /** Handles the event without control access. */
     void on(E event);
 
+    /** Handles the event with access to propagation control. */
     void on(E event, EventControl control);
 
+    /** Listener variant that does not require propagation control. */
     non-sealed interface Simple<E> extends Listener<E> {
       default void on(E event, EventControl control) {
         on(event);
       }
     }
 
+    /** Listener variant that optionally uses propagation control. */
     non-sealed interface Controlled<E> extends Listener<E> {
       default void on(E event) {
         on(event, new EventControl());
@@ -274,6 +327,11 @@ public class EventEmitter<E> {
     }
   }
 
+  /**
+   * Controls event propagation and listener lifecycle within a single emission.
+   *
+   * <p>Passed to {@link Listener.Controlled} during {@link EventEmitter#emit}.
+   */
   public static class EventControl {
 
     /** Whether event propagation is going to be stopped */
@@ -283,24 +341,18 @@ public class EventEmitter<E> {
     protected boolean markedForRemoval = false;
 
     /**
-     * Stops event propagation
+     * Stops propagation to lower-priority listeners.
      *
-     * <ul>
-     *   <li>It can be invoked multiple times in a listener
-     *   <li>The effect can't be canceled once invoked
-     * </ul>
+     * <p>Cannot be undone once called.
      */
     public void stop() {
       shouldStop = true;
     }
 
     /**
-     * Schedules self-removal after execution
+     * Schedules this listener for removal after the current invocation completes.
      *
-     * <ul>
-     *   <li>It can be invoked multiple times in a listener
-     *   <li>The effect can't be canceled once invoked
-     * </ul>
+     * <p>Cannot be undone once called.
      */
     public void unsubscribe() {
       markedForRemoval = true;

@@ -10,8 +10,6 @@ import javax.annotation.Nullable;
 public class EventEmitter<E> {
   protected static final int DEFAULT_PRIORITY = 0;
 
-  public String name;
-
   /** Sorted by priority in descending order */
   protected final List<Subscription<E>> subscriptions = new LinkedList<>();
 
@@ -23,13 +21,7 @@ public class EventEmitter<E> {
    */
   protected final Map<Constable, Subscription<E>> subscriptionsByKey = new HashMap<>();
 
-  public EventEmitter() {
-    this("Unnamed");
-  }
-
-  public EventEmitter(String name) {
-    this.name = name;
-  }
+  public EventEmitter() {}
 
   /** Remove all listeners */
   public EventEmitter<E> clear() {

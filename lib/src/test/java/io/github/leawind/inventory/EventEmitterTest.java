@@ -15,15 +15,6 @@ public class EventEmitterTest {
   }
 
   @Test
-  void testDelegateName() {
-    var delegate = new EventEmitter<>("TestDelegate");
-    assertEquals("TestDelegate", delegate.name);
-
-    var unnamedDelegate = new EventEmitter<>();
-    assertEquals("Unnamed", unnamedDelegate.name);
-  }
-
-  @Test
   void testOnce() {
     var s = new StringBuilder();
 

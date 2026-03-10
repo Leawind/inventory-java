@@ -1,8 +1,8 @@
 package io.github.leawind.inventory.event;
 
 import java.lang.constant.Constable;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
@@ -20,7 +20,7 @@ public class EventEmitter<E> {
   protected static final int DEFAULT_PRIORITY = 0;
 
   /** Sorted by priority in descending order */
-  protected final List<Subscription<E>> subscriptions = new LinkedList<>();
+  protected final List<Subscription<E>> subscriptions = new ArrayList<>();
 
   /**
    * Lookup map from key to subscription.

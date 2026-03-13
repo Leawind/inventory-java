@@ -1,8 +1,7 @@
-package io.github.leawind.inventory;
+package io.github.leawind.inventory.event;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import io.github.leawind.inventory.event.EventEmitter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

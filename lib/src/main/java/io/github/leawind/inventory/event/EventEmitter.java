@@ -68,7 +68,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Listener.Unnamed<E> listener) {
+  public EventEmitter<E> once(Listener.NoArg<E> listener) {
     return once((Listener<E>) listener);
   }
 
@@ -78,7 +78,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Listener.Simple<E> listener) {
+  public EventEmitter<E> once(Listener.Basic<E> listener) {
     return once((Listener<E>) listener);
   }
 
@@ -98,7 +98,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.Unnamed<E> listener) {
+  public EventEmitter<E> once(Constable key, Listener.NoArg<E> listener) {
     return once(key, (Listener<E>) listener);
   }
 
@@ -108,7 +108,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.Simple<E> listener) {
+  public EventEmitter<E> once(Constable key, Listener.Basic<E> listener) {
     return once(key, (Listener<E>) listener);
   }
 
@@ -129,7 +129,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.Unnamed<E> listener, int priority) {
+  public EventEmitter<E> once(Constable key, Listener.NoArg<E> listener, int priority) {
     return once(key, (Listener<E>) listener, priority);
   }
 
@@ -140,7 +140,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.Simple<E> listener, int priority) {
+  public EventEmitter<E> once(Constable key, Listener.Basic<E> listener, int priority) {
     return once(key, (Listener<E>) listener, priority);
   }
 
@@ -160,7 +160,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Listener.Unnamed<E> listener) {
+  public EventEmitter<E> on(Listener.NoArg<E> listener) {
     return on((Listener<E>) listener);
   }
 
@@ -169,7 +169,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Listener.Simple<E> listener) {
+  public EventEmitter<E> on(Listener.Basic<E> listener) {
     return on((Listener<E>) listener);
   }
 
@@ -188,7 +188,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Listener.Unnamed<E> listener, int priority) {
+  public EventEmitter<E> on(Listener.NoArg<E> listener, int priority) {
     return on((Listener<E>) listener, priority);
   }
 
@@ -198,7 +198,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Listener.Simple<E> listener, int priority) {
+  public EventEmitter<E> on(Listener.Basic<E> listener, int priority) {
     return on((Listener<E>) listener, priority);
   }
 
@@ -219,7 +219,7 @@ public class EventEmitter<E> {
    * @param key unique, non-null identifier for the listener
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.Unnamed<E> listener) {
+  public EventEmitter<E> on(Constable key, Listener.NoArg<E> listener) {
     return on(key, (Listener<E>) listener);
   }
 
@@ -230,7 +230,7 @@ public class EventEmitter<E> {
    * @param key unique, non-null identifier for the listener
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.Simple<E> listener) {
+  public EventEmitter<E> on(Constable key, Listener.Basic<E> listener) {
     return on(key, (Listener<E>) listener);
   }
 
@@ -253,7 +253,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.Unnamed<E> listener, int priority) {
+  public EventEmitter<E> on(Constable key, Listener.NoArg<E> listener, int priority) {
     return on(key, (Listener<E>) listener, priority);
   }
 
@@ -265,7 +265,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.Simple<E> listener, int priority) {
+  public EventEmitter<E> on(Constable key, Listener.Basic<E> listener, int priority) {
     return on(key, (Listener<E>) listener, priority);
   }
 
@@ -376,23 +376,22 @@ public class EventEmitter<E> {
   }
 
   /** Sugar method for listener declaration */
-  public Listener<E> listener(Listener.Simple<E> listener) {
+  public Listener<E> listener(Listener.Basic<E> listener) {
     return listener;
   }
 
   /**
    * A listener that receives an event and an optional {@link EventControl}.
    *
-   * <p>Use {@link Simple} when no propagation control is needed, or {@link Listener} to call {@code
+   * <p>Use {@link Basic} when no propagation control is needed, or {@link Listener} to call {@code
    * stop()} / {@code unsubscribe()} during handling.
    *
    * @param <E> the event type
    */
   public interface Listener<E> {
-    /** Handles the event with access to propagation control. */
     void on(E event, EventControl control);
 
-    interface Unnamed<E> extends Listener<E> {
+    interface NoArg<E> extends Listener<E> {
       void on();
 
       default void on(E event, EventControl control) {
@@ -400,8 +399,7 @@ public class EventEmitter<E> {
       }
     }
 
-    /** Listener variant that does not require propagation control. */
-    interface Simple<E> extends Listener<E> {
+    interface Basic<E> extends Listener<E> {
 
       void on(E event);
 

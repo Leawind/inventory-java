@@ -11,6 +11,10 @@ public class SimpleEventEmitter<E> {
     return this;
   }
 
+  public boolean hasListener() {
+    return listener != null;
+  }
+
   public @Nullable Listener<E> getListener() {
     return listener;
   }

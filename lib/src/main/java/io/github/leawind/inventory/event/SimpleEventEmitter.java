@@ -48,6 +48,10 @@ public class SimpleEventEmitter<E> {
     return listener;
   }
 
+  public void emit() {
+    emit(null);
+  }
+
   public void emit(@Nullable E event) {
     if (listener != null) {
       listener.on(event);

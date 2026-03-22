@@ -58,6 +58,19 @@ tasks.named<Test>("test") {
     useJUnitPlatform()
 }
 
+jmh {
+    // Example: -PjmhInclude=com.example.MyBench
+    val jmhInclude = findProperty("jmhInclude") as? String
+    val jmhExclude = findProperty("jmhExclude") as? String
+
+    if (!jmhInclude.isNullOrBlank()) {
+        includes = listOf(jmhInclude)
+    }
+    if (!jmhExclude.isNullOrBlank()) {
+        excludes = listOf(jmhExclude)
+    }
+}
+
 group = project.properties["lib_group_id"] as String
 version = project.properties["lib_version"] as String
 

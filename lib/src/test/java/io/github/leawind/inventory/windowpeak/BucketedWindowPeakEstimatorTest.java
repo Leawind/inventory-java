@@ -69,7 +69,7 @@ class BucketedWindowPeakEstimatorTest {
   @ParameterizedTest
   @CsvSource({"0, 100", "100, 0", "-1, 100"})
   @DisplayName("Should throw exception for invalid constructor arguments")
-  void testInvalidArguments(long window, long bucket) {
+  void testInvalidArguments(int window, int bucket) {
     assertThrows(
         IllegalArgumentException.class, () -> new BucketedWindowPeakEstimator(window, bucket));
   }

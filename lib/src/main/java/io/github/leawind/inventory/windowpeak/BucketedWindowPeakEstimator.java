@@ -5,26 +5,26 @@ import java.util.Arrays;
 public class BucketedWindowPeakEstimator implements WindowPeakEstimator {
 
   private final int[] buckets;
-  private final long bucketDurationMillis;
+  private final int bucketSize;
 
   private int currentBucket = 0;
-  private long lastTickTime = 0;
+  private int lastTickTime = 0;
 
-  public BucketedWindowPeakEstimator(long windowMillis, long bucketDurationMillis) {
-    if (windowMillis <= 0 || bucketDurationMillis <= 0) {
-      throw new IllegalArgumentException("windowMillis and bucketDurationMillis must be > 0");
+  public BucketedWindowPeakEstimator(int windowSize, int bucketSize) {
+    if (windowSize <= 0 || bucketSize <= 0) {
+      throw new IllegalArgumentException("windowSize and bucketSize must be > 0");
     }
-    int count = (int) Math.ceil((double) windowMillis / bucketDurationMillis);
+    int count = (int) Math.ceil((double) windowSize / bucketSize);
     if (count <= 0) {
       throw new IllegalArgumentException("bucket count must be > 0");
     }
 
-    this.bucketDurationMillis = bucketDurationMillis;
+    this.bucketSize = bucketSize;
     this.buckets = new int[count];
   }
 
   @Override
-  public void record(int sample, long now) {
+  public void record(int sample, int now) {
     advance(now);
 
     // store peak value
@@ -44,11 +44,11 @@ public class BucketedWindowPeakEstimator implements WindowPeakEstimator {
 
   private void advance(long now) {
     long elapsed = now - lastTickTime;
-    if (elapsed < bucketDurationMillis) {
+    if (elapsed < bucketSize) {
       return;
     }
 
-    int steps = (int) (elapsed / bucketDurationMillis);
+    int steps = (int) (elapsed / bucketSize);
     int move = Math.min(steps, buckets.length);
 
     for (int i = 0; i < move; i++) {
@@ -57,7 +57,7 @@ public class BucketedWindowPeakEstimator implements WindowPeakEstimator {
       buckets[currentBucket] = 0;
     }
 
-    lastTickTime += (long) steps * bucketDurationMillis;
+    lastTickTime += steps * bucketSize;
   }
 
   @Override

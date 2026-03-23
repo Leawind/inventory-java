@@ -19,7 +19,7 @@ public class ObjectPoolTest {
         Arguments.of((PoolFactory<Cat>) capacity -> new DequeObjectPool<>(Cat::new, capacity)),
         Arguments.of(
             (PoolFactory<Cat>)
-                capacity -> new StackObjectPool<>(Cat::new, capacity, 3 / 4f, 4 / 3f)));
+                capacity -> StackObjectPool.builder(Cat::new).capacity(capacity).build()));
   }
 
   @ParameterizedTest

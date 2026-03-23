@@ -3,6 +3,11 @@ package io.github.leawind.inventory.objectpool;
 import java.util.ArrayDeque;
 import java.util.function.Supplier;
 
+/**
+ * Object pool using a double-ended queue
+ *
+ * <p>~10-25% slower than {@link StackObjectPool} in standard tests.
+ */
 public class DequeObjectPool<T> implements ObjectPool<T> {
   private final Supplier<T> factory;
 

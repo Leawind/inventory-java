@@ -2,6 +2,13 @@ package io.github.leawind.inventory.objectpool;
 
 import java.util.function.Supplier;
 
+/**
+ * Object pool using a stack
+ *
+ * <p>~10-25% faster than {@link DequeObjectPool} in standard tests.
+ *
+ * <p>Configurable expansion threshold and ratio
+ */
 public class StackObjectPool<T> implements ObjectPool<T> {
   private final Supplier<T> factory;
 

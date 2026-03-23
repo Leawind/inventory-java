@@ -1,5 +1,6 @@
 package io.github.leawind.inventory.objectpool;
 
+import io.github.leawind.inventory.windowpeak.SimpleWindowPeakEstimator;
 import java.util.function.Supplier;
 
 /**
@@ -17,6 +18,11 @@ public class StackObjectPool<T> implements ObjectPool<T> {
 
   private final float expandThreshold;
   private final float expandRatio;
+
+  private final float shrinkThreshold = 0.25f;
+  private final float shrinkRatio = 0.25f;
+
+  private SimpleWindowPeakEstimator peakEstimator = new SimpleWindowPeakEstimator(5000);
 
   public StackObjectPool(Supplier<T> factory) {
     this(factory, 8, 3 / 4f, 4 / 3f);
@@ -37,6 +43,13 @@ public class StackObjectPool<T> implements ObjectPool<T> {
     this.expandRatio = expandRatio;
   }
 
+  public void checkShrink(int now) {
+    peakEstimator.record(size, now);
+    if (peakEstimator.peak() < stack.length * shrinkThreshold) {
+      shrink((int) Math.ceil(stack.length * shrinkRatio));
+    }
+  }
+
   private void expand(int newCapacity) {
     T[] newStack = newStack(newCapacity);
     System.arraycopy(stack, 0, newStack, 0, size);
@@ -45,6 +58,13 @@ public class StackObjectPool<T> implements ObjectPool<T> {
       newStack[i] = factory.get();
     }
 
+    stack = newStack;
+  }
+
+  private void shrink(int newCapacity) {
+    T[] newStack = newStack(newCapacity);
+    System.arraycopy(stack, 0, newStack, 0, newCapacity);
+    size = newCapacity;
     stack = newStack;
   }
 

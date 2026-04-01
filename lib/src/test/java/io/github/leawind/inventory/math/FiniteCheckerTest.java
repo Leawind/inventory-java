@@ -50,14 +50,14 @@ public class FiniteCheckerTest {
   void testCheckNonFiniteDouble() {
     checker.check(Double.POSITIVE_INFINITY);
     assertEquals(1, exceptionList.size());
-    assertEquals(Double.POSITIVE_INFINITY, exceptionList.getFirst().objects[0]);
+    assertEquals(Double.POSITIVE_INFINITY, exceptionList.get(0).objects[0]);
   }
 
   @Test
   void testCheckNaNDouble() {
     checker.check(Double.NaN);
     assertEquals(1, exceptionList.size());
-    assertEquals(Double.NaN, exceptionList.getFirst().objects[0]);
+    assertEquals(Double.NaN, exceptionList.get(0).objects[0]);
   }
 
   @Test
@@ -74,14 +74,14 @@ public class FiniteCheckerTest {
   void testCheckNonFiniteFloat() {
     checker.check(Float.POSITIVE_INFINITY);
     assertEquals(1, exceptionList.size());
-    assertEquals(Float.POSITIVE_INFINITY, exceptionList.getFirst().objects[0]);
+    assertEquals(Float.POSITIVE_INFINITY, exceptionList.get(0).objects[0]);
   }
 
   @Test
   void testCheckNaNFloat() {
     checker.check(Float.NaN);
     assertEquals(1, exceptionList.size());
-    assertEquals(Float.NaN, exceptionList.getFirst().objects[0]);
+    assertEquals(Float.NaN, exceptionList.get(0).objects[0]);
   }
 
   @Test
@@ -96,9 +96,9 @@ public class FiniteCheckerTest {
   void testCheckMultipleDoublesWithNonFinite() {
     checker.check(1.0, Double.POSITIVE_INFINITY);
     assertEquals(1, exceptionList.size());
-    assertEquals(2, exceptionList.getFirst().objects.length);
-    assertEquals(1.0, exceptionList.getFirst().objects[0]);
-    assertEquals(Double.POSITIVE_INFINITY, exceptionList.getFirst().objects[1]);
+    assertEquals(2, exceptionList.get(0).objects.length);
+    assertEquals(1.0, exceptionList.get(0).objects[0]);
+    assertEquals(Double.POSITIVE_INFINITY, exceptionList.get(0).objects[1]);
   }
 
   @Test
@@ -113,9 +113,9 @@ public class FiniteCheckerTest {
   void testCheckMultipleFloatsWithNonFinite() {
     checker.check(1.0f, Float.NEGATIVE_INFINITY);
     assertEquals(1, exceptionList.size());
-    assertEquals(2, exceptionList.getFirst().objects.length);
-    assertEquals(1.0f, exceptionList.getFirst().objects[0]);
-    assertEquals(Float.NEGATIVE_INFINITY, exceptionList.getFirst().objects[1]);
+    assertEquals(2, exceptionList.get(0).objects.length);
+    assertEquals(1.0f, exceptionList.get(0).objects[0]);
+    assertEquals(Float.NEGATIVE_INFINITY, exceptionList.get(0).objects[1]);
   }
 
   @Test
@@ -128,8 +128,8 @@ public class FiniteCheckerTest {
   void testCheckObjectsWithNonFinite() {
     checker.check((Object) 1.0, (Object) Float.POSITIVE_INFINITY, (Object) 3);
     assertEquals(1, exceptionList.size());
-    assertEquals(3, exceptionList.getFirst().objects.length);
-    assertEquals(Float.POSITIVE_INFINITY, exceptionList.getFirst().objects[1]);
+    assertEquals(3, exceptionList.get(0).objects.length);
+    assertEquals(Float.POSITIVE_INFINITY, exceptionList.get(0).objects[1]);
   }
 
   @Test
@@ -138,7 +138,7 @@ public class FiniteCheckerTest {
     checker.checkOnce(Double.NEGATIVE_INFINITY);
     checker.checkOnce(Float.NaN);
     assertEquals(1, exceptionList.size());
-    assertEquals(Double.POSITIVE_INFINITY, exceptionList.getFirst().objects[0]);
+    assertEquals(Double.POSITIVE_INFINITY, exceptionList.get(0).objects[0]);
   }
 
   @Test
@@ -146,8 +146,8 @@ public class FiniteCheckerTest {
     checker.checkOnce(1.0, Double.POSITIVE_INFINITY);
     checker.checkOnce(1.0, Double.NEGATIVE_INFINITY);
     assertEquals(1, exceptionList.size());
-    assertEquals(1.0, exceptionList.getFirst().objects[0]);
-    assertEquals(Double.POSITIVE_INFINITY, exceptionList.getFirst().objects[1]);
+    assertEquals(1.0, exceptionList.get(0).objects[0]);
+    assertEquals(Double.POSITIVE_INFINITY, exceptionList.get(0).objects[1]);
   }
 
   @Test
@@ -155,7 +155,7 @@ public class FiniteCheckerTest {
     checker.checkOnce((Object) 1.0, (Object) Float.NaN, (Object) 3);
     checker.checkOnce((Object) 2.0, (Object) Double.POSITIVE_INFINITY);
     assertEquals(1, exceptionList.size());
-    assertEquals(Float.NaN, exceptionList.getFirst().objects[1]);
+    assertEquals(Float.NaN, exceptionList.get(0).objects[1]);
   }
 
   @Test
@@ -219,7 +219,7 @@ public class FiniteCheckerTest {
 
     checker.check(nonFiniteVec2);
     assertEquals(1, exceptionList.size());
-    assertEquals(nonFiniteVec2, exceptionList.getFirst().objects[0]);
+    assertEquals(nonFiniteVec2, exceptionList.get(0).objects[0]);
   }
 
   @Test
@@ -229,7 +229,7 @@ public class FiniteCheckerTest {
 
     checker.check((Object) finiteVec2, (Object) 1.0, (Object) nonFiniteVec2);
     assertEquals(1, exceptionList.size());
-    assertEquals(nonFiniteVec2, exceptionList.getFirst().objects[2]);
+    assertEquals(nonFiniteVec2, exceptionList.get(0).objects[2]);
   }
 
   @Test
@@ -265,14 +265,14 @@ public class FiniteCheckerTest {
 
     multiChecker.check(finiteVec2, finiteVec3, nonFiniteVec3);
     assertEquals(1, exceptionList.size());
-    assertEquals(nonFiniteVec3, exceptionList.getFirst().objects[2]);
+    assertEquals(nonFiniteVec3, exceptionList.get(0).objects[2]);
   }
 
   @Test
   void testExceptionMessageFormat() {
     checker.check(Double.POSITIVE_INFINITY);
     assertEquals(
-        "At least one of them is not finite: [Infinity]", exceptionList.getFirst().getMessage());
+        "At least one of them is not finite: [Infinity]", exceptionList.get(0).getMessage());
 
     checker.reset();
     checker.check(1.0, Double.NaN);

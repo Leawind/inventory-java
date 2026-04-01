@@ -1,6 +1,5 @@
 package io.github.leawind.inventory.math.interpolation;
 
-
 public class NewtonInterpolationTest {
   public static void main(String[] args) {
     var it =

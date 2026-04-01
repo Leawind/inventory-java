@@ -34,8 +34,7 @@ public class OptionTest {
     assertFalse(none.isSome());
     assertTrue(none.isNone());
     assertThrows(JustError.class, none::unwrap);
-    assertThrows(
-	    JustError.class, () -> none.expect("Expected failure"));
+    assertThrows(JustError.class, () -> none.expect("Expected failure"));
     assertEquals("default", none.unwrapOr("default"));
     assertEquals("default", none.unwrapOrElse(() -> "default"));
   }

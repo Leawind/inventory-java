@@ -67,9 +67,11 @@ public class JustBenchmark {
 
   void justProcess(Summer summer, float[] array) {
     for (float v : array) {
-      switch (justProcess(v)) {
-        case Result.Ok<Float, ?> ok -> summer.sum += ok.unwrap();
-        case Result.Err<?, Float> err -> summer.errors.add(err.unwrapErr());
+      var result = justProcess(v);
+      if (result instanceof Result.Ok<Float, ?> ok) {
+        summer.sum += ok.unwrap();
+      } else if (result instanceof Result.Err<?, Float> err) {
+        summer.errors.add(err.unwrapErr());
       }
     }
   }

@@ -51,13 +51,13 @@ public class LinearInterpolation implements Interpolation<Double> {
       throw new IllegalStateException("At least one point is required");
     }
     if (points.size() == 1) {
-      return points.getFirst().y();
+      return points.get(0).y();
     }
-    if (x <= points.getFirst().x()) {
-      return points.getFirst().y();
+    if (x <= points.get(0).x()) {
+      return points.get(0).y();
     }
-    if (x >= points.getLast().x()) {
-      return points.getLast().y();
+    if (x >= points.get(points.size() - 1).x()) {
+      return points.get(points.size() - 1).y();
     }
     for (int i = 0; i < points.size() - 1; i++) {
       var point = points.get(i);

@@ -58,7 +58,7 @@ public class JustBenchmark {
   }
 
   Result<Float, Float> justProcess(float value) {
-    if (value < errorRate) {
+    if (value > errorRate) {
       return Result.ok(value);
     } else {
       return Result.err(value);
@@ -77,7 +77,7 @@ public class JustBenchmark {
   }
 
   float tryCatchProcess(float value) throws CustomException {
-    if (value < errorRate) {
+    if (value > errorRate) {
       return value;
     }
     throw new CustomException(value);

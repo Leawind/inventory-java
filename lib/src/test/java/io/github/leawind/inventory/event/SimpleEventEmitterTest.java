@@ -2,6 +2,8 @@ package io.github.leawind.inventory.event;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -26,16 +28,29 @@ public class SimpleEventEmitterTest {
   }
 
   @Test
-  void testOnce_shouldRemoveAfterFirstEmit() {
+  void testMultipleListeners_allShouldBeTriggered() {
     var s = new StringBuilder();
 
-    eventEmitter.once(s::append);
+    eventEmitter.on(e -> s.append("1"));
+    eventEmitter.on(e -> s.append("2"));
+    eventEmitter.on(e -> s.append("3"));
 
-    eventEmitter.emit("A");
-    eventEmitter.emit("B");
-    eventEmitter.emit("C");
+    eventEmitter.emit("test");
 
-    assertEquals("A", s.toString());
+    assertEquals("123", s.toString());
+  }
+
+  @Test
+  void testMultipleListeners_orderPreserved() {
+    var result = new ArrayList<>();
+
+    eventEmitter.on(e -> result.add("First"));
+    eventEmitter.on(e -> result.add("Second"));
+    eventEmitter.on(e -> result.add("Third"));
+
+    eventEmitter.emit("test");
+
+    assertEquals(List.of("First", "Second", "Third"), result);
   }
 
   @Test
@@ -51,132 +66,71 @@ public class SimpleEventEmitterTest {
   }
 
   @Test
-  void testNoArgListener_once() {
+  void testMixedListenerTypes_bothTriggered() {
     var s = new StringBuilder();
 
-    eventEmitter.once(() -> s.append("Y"));
-
-    eventEmitter.emit("ignored");
-    eventEmitter.emit("ignored");
-
-    assertEquals("Y", s.toString());
-  }
-
-  @Test
-  void testOff_shouldRemoveListener() {
-    var s = new StringBuilder();
-
-    eventEmitter.on(s::append);
+    eventEmitter.on(e -> s.append(e));
+    eventEmitter.on(() -> s.append("-"));
 
     eventEmitter.emit("A");
-    eventEmitter.off();
     eventEmitter.emit("B");
 
-    assertEquals("A", s.toString());
+    assertEquals("A-B-", s.toString());
   }
 
   @Test
-  void testClear_shouldRemoveListener() {
+  void testClear_shouldRemoveAllListeners() {
     var s = new StringBuilder();
 
     eventEmitter.on(s::append);
+    eventEmitter.on(() -> s.append("X"));
 
     eventEmitter.emit("A");
     eventEmitter.clear();
     eventEmitter.emit("B");
 
-    assertEquals("A", s.toString());
+    assertEquals("AX", s.toString());
   }
 
   @Test
-  void testGetListener_shouldReturnCorrectListener() {
-    SimpleEventEmitter.Listener<String> listener = (e) -> {};
+  void testConstructor_withExistingListeners() {
+    var s = new StringBuilder();
 
-    eventEmitter.on(listener);
+    var listeners = new ArrayList<SimpleEventEmitter.Listener<String>>();
+    listeners.add(e -> s.append("1"));
+    listeners.add(e -> s.append("2"));
 
-    assertSame(listener, eventEmitter.getListener());
-  }
+    var customEmitter = new SimpleEventEmitter<>(listeners);
+    customEmitter.emit("test");
 
-  @Test
-  void testGetListener_afterClear_shouldReturnNull() {
-    SimpleEventEmitter.Listener<String> listener = (e) -> {};
-
-    eventEmitter.on(listener);
-    eventEmitter.clear();
-
-    assertNull(eventEmitter.getListener());
-  }
-
-  @Test
-  void testGetListener_afterOff_shouldReturnNull() {
-    SimpleEventEmitter.Listener<String> listener = (e) -> {};
-
-    eventEmitter.on(listener);
-    eventEmitter.off();
-
-    assertNull(eventEmitter.getListener());
-  }
-
-  @Test
-  void testGetListener_afterOnceAutoRemove_shouldReturnNull() {
-    SimpleEventEmitter.Listener<String> listener = (e) -> {};
-
-    eventEmitter.once(listener);
-    eventEmitter.emit("test");
-
-    assertNull(eventEmitter.getListener());
+    assertEquals("12", s.toString());
   }
 
   @Test
   void testChaining_on() {
     var result = eventEmitter.on(e -> {});
-
-    assertSame(eventEmitter, result);
-  }
-
-  @Test
-  void testChaining_once() {
-    var result = eventEmitter.once(e -> {});
-
-    assertSame(eventEmitter, result);
-  }
-
-  @Test
-  void testChaining_off() {
-    var result = eventEmitter.off();
-
     assertSame(eventEmitter, result);
   }
 
   @Test
   void testChaining_clear() {
     var result = eventEmitter.clear();
-
     assertSame(eventEmitter, result);
   }
 
   @Test
-  void testReplaceListener_byCallingOnAgain() {
+  void testChaining_multipleCalls() {
     var s = new StringBuilder();
 
-    eventEmitter.on(e -> s.append("A"));
-    eventEmitter.on(e -> s.append("B"));
+    eventEmitter
+        .on(e -> s.append("A"))
+        .on(e -> s.append("B"))
+        .clear()
+        .on(e -> s.append("C"));
 
     eventEmitter.emit("test");
 
-    assertEquals("B", s.toString());
-  }
-
-  @Test
-  void testReplaceListener_byCallingOnceAgain() {
-    var s = new StringBuilder();
-
-    eventEmitter.once(e -> s.append("A"));
-    eventEmitter.once(e -> s.append("B"));
-
-    eventEmitter.emit("test");
-
-    assertEquals("B", s.toString());
+    assertEquals("C", s.toString());
   }
 
   @Test
@@ -191,46 +145,35 @@ public class SimpleEventEmitterTest {
   }
 
   @Test
-  void testMultipleOnce_callsShouldOnlyKeepLast() {
+  void testEmit_noArgOverload() {
     var s = new StringBuilder();
 
-    eventEmitter.once(e -> s.append("1")).once(e -> s.append("2")).once(e -> s.append("3"));
+    eventEmitter.on(() -> s.append("Called"));
+
+    eventEmitter.emit();
+
+    assertEquals("Called", s.toString());
+  }
+
+  @Test
+  void testEmptyEmitter_emitDoesNothing() {
+    // Should not throw exceptions
+    eventEmitter.emit("test");
+    eventEmitter.emit();
+    eventEmitter.clear();
+  }
+
+  @Test
+  void testAddSameListenerMultipleTimes() {
+    var counter = new int[]{0};
+    SimpleEventEmitter.Listener<String> listener = e -> counter[0]++;
+
+    eventEmitter.on(listener);
+    eventEmitter.on(listener);
+    eventEmitter.on(listener);
 
     eventEmitter.emit("test");
 
-    assertEquals("3", s.toString());
-  }
-
-  @Test
-  void testSwitch_fromOnceToOn() {
-    var s = new StringBuilder();
-
-    eventEmitter.once(e -> s.append("1"));
-    eventEmitter.on(e -> s.append("2"));
-
-    eventEmitter.emit("A");
-    eventEmitter.emit("B");
-
-    assertEquals("22", s.toString());
-  }
-
-  @Test
-  void testSwitch_fromOnToOnce() {
-    var s = new StringBuilder();
-
-    eventEmitter.on(e -> s.append("1"));
-    eventEmitter.once(e -> s.append("2"));
-
-    eventEmitter.emit("A");
-    eventEmitter.emit("B");
-
-    assertEquals("2", s.toString());
-  }
-
-  @Test
-  void testListenerHelper_method() {
-    SimpleEventEmitter.Listener<String> listener = eventEmitter.listener(() -> {});
-
-    assertNotNull(listener);
+    assertEquals(3, counter[0]);
   }
 }

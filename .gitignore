@@ -4,6 +4,16 @@
 # Gradle build output
 build
 
+# AI tools
+/.ai/
+.clinerules/
+.codebuddy/
+.cursorrules/
+.kilo/
+.lingma/
+.marscode/
+.trae/
+
 # idea
 .idea/
 out

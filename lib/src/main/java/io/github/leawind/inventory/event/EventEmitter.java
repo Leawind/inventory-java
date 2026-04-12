@@ -356,9 +356,12 @@ public class EventEmitter<E> {
    */
   public void emit(@Nullable E event) {
     var it = subscriptions.listIterator();
+    var control = new EventControl();
+
     while (it.hasNext()) {
       var subscription = it.next();
-      var control = new EventControl();
+
+      control.reset();
 
       if (subscription.once) {
         control.unsubscribe();
@@ -438,6 +441,11 @@ public class EventEmitter<E> {
      */
     public void unsubscribe() {
       markedForRemoval = true;
+    }
+
+    protected void reset() {
+      shouldStop = false;
+      markedForRemoval = false;
     }
   }
 

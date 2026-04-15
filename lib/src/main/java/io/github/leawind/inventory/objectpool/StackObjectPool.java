@@ -28,12 +28,6 @@ public class StackObjectPool<T> implements ObjectPool<T> {
     this(factory, 8, 3 / 4f, 4 / 3f, 0.25f, 0.5f, 5000);
   }
 
-  @Deprecated
-  public StackObjectPool(
-      Supplier<T> factory, int capacity, float expandThreshold, float expandRatio) {
-    this(factory, capacity, expandThreshold, expandRatio, 0.25f, 1 / expandRatio, 5000);
-  }
-
   private StackObjectPool(
       Supplier<T> factory,
       int capacity,

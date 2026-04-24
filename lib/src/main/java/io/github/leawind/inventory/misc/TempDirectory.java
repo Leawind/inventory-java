@@ -35,6 +35,11 @@ public class TempDirectory implements AutoCloseable {
     deleteDirectoryRecursively(tempDir);
   }
 
+  @Override
+  public String toString() {
+    return tempDir.toString();
+  }
+
   private static void deleteDirectoryRecursively(Path dir) throws IOException {
     if (!Files.exists(dir)) {
       return;

@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 public class Lazy<T> implements Supplier<T> {
 
   private final Supplier<T> valueGetter;
-  private T value;
+  private volatile T value;
 
   public Lazy(Supplier<T> valueGetter) {
     this.valueGetter = valueGetter;
@@ -18,7 +18,11 @@ public class Lazy<T> implements Supplier<T> {
   @Override
   public T get() {
     if (value == null) {
-      value = valueGetter.get();
+      synchronized (this) {
+        if (value == null) {
+          value = valueGetter.get();
+        }
+      }
     }
     return value;
   }

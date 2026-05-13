@@ -11,7 +11,7 @@ public class Lazy<T> implements Supplier<T> {
     this.valueGetter = valueGetter;
   }
 
-  public void set(T value) {
+  public synchronized void set(T value) {
     this.value = value;
   }
 
@@ -27,11 +27,11 @@ public class Lazy<T> implements Supplier<T> {
     return value;
   }
 
-  public void reset() {
+  public synchronized void reset() {
     this.value = null;
   }
 
-  public boolean isComputed() {
+  public synchronized boolean isComputed() {
     return value != null;
   }
 }

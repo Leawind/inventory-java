@@ -15,7 +15,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testOn_and_emit() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(s::append);
     eventEmitter.emit("A");
@@ -27,7 +27,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testOnce_shouldRemoveAfterFirstEmit() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.once(s::append);
 
@@ -40,7 +40,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testNoArgListener_on() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(() -> s.append("X"));
 
@@ -52,7 +52,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testNoArgListener_once() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.once(() -> s.append("Y"));
 
@@ -64,7 +64,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testOff_shouldRemoveListener() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(s::append);
 
@@ -77,7 +77,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testClear_shouldRemoveListener() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(s::append);
 
@@ -129,35 +129,35 @@ public class SingleEventEmitterTest {
 
   @Test
   void testChaining_on() {
-    var result = eventEmitter.on(e -> {});
+    SingleEventEmitter<String> result = eventEmitter.on(e -> {});
 
     assertSame(eventEmitter, result);
   }
 
   @Test
   void testChaining_once() {
-    var result = eventEmitter.once(e -> {});
+    SingleEventEmitter<String> result = eventEmitter.once(e -> {});
 
     assertSame(eventEmitter, result);
   }
 
   @Test
   void testChaining_off() {
-    var result = eventEmitter.off();
+    SingleEventEmitter<String> result = eventEmitter.off();
 
     assertSame(eventEmitter, result);
   }
 
   @Test
   void testChaining_clear() {
-    var result = eventEmitter.clear();
+    SingleEventEmitter<String> result = eventEmitter.clear();
 
     assertSame(eventEmitter, result);
   }
 
   @Test
   void testReplaceListener_byCallingOnAgain() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(e -> s.append("A"));
     eventEmitter.on(e -> s.append("B"));
@@ -169,7 +169,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testReplaceListener_byCallingOnceAgain() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.once(e -> s.append("A"));
     eventEmitter.once(e -> s.append("B"));
@@ -181,7 +181,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testEmit_withNullValue() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(e -> s.append(e == null ? "NULL" : e));
 
@@ -192,7 +192,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testMultipleOnce_callsShouldOnlyKeepLast() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.once(e -> s.append("1")).once(e -> s.append("2")).once(e -> s.append("3"));
 
@@ -203,7 +203,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testSwitch_fromOnceToOn() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.once(e -> s.append("1"));
     eventEmitter.on(e -> s.append("2"));
@@ -216,7 +216,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testSwitch_fromOnToOnce() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(e -> s.append("1"));
     eventEmitter.once(e -> s.append("2"));

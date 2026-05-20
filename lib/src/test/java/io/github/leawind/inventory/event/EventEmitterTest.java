@@ -15,7 +15,7 @@ public class EventEmitterTest {
 
   @Test
   void testOnce() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter
         .on(e -> s.append("A"))
@@ -32,7 +32,7 @@ public class EventEmitterTest {
 
   @Test
   void testPriority() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter
         .on(e -> s.append('A'), 1)
@@ -46,10 +46,10 @@ public class EventEmitterTest {
 
   @Test
   void testOff() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
-    var listenerA = eventEmitter.listener(e -> s.append("A"));
-    var listenerB = eventEmitter.listener(e -> s.append("B"));
+    EventEmitter.Listener<Object> listenerA = eventEmitter.listener(e -> s.append("A"));
+    EventEmitter.Listener<Object> listenerB = eventEmitter.listener(e -> s.append("B"));
 
     eventEmitter.on(listenerA);
     eventEmitter.on(listenerB, 4);
@@ -72,7 +72,7 @@ public class EventEmitterTest {
 
   @Test
   void testStopPropagation() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter
         .on(
@@ -88,7 +88,7 @@ public class EventEmitterTest {
 
   @Test
   void testRemoveSelf() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter
         .on(
@@ -110,7 +110,7 @@ public class EventEmitterTest {
 
   @Test
   void testClear() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(e -> s.append("A")).on(e -> s.append("B")).clear().on(e -> s.append("C"));
 
@@ -132,7 +132,7 @@ public class EventEmitterTest {
 
   @Test
   void on() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on("testKey", e -> s.append("A")).on("testKey", e -> s.append("B"));
 

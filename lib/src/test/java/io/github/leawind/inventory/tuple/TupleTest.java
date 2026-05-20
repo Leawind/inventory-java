@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 public class TupleTest {
   @Test
   public void testHardTuple() {
-    var t = Tuple.of(234, false, "Hello");
+    Tuple._3<Integer, Boolean, String> t = Tuple.of(234, false, "Hello");
     assert (t.$0() == 234);
     assert (t.$1() == false);
   }

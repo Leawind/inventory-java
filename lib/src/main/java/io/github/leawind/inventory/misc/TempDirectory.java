@@ -47,7 +47,7 @@ public class TempDirectory implements AutoCloseable {
 
     Files.walkFileTree(
         dir,
-        new SimpleFileVisitor<>() {
+        new SimpleFileVisitor<Path>() {
           @Override
           public @NonNull FileVisitResult visitFile(
               @NonNull Path file, @NonNull BasicFileAttributes attrs) throws IOException {

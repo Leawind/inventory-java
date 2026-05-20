@@ -17,7 +17,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testOn_and_emit() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(s::append);
     eventEmitter.emit("A");
@@ -29,7 +29,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testMultipleListeners_allShouldBeTriggered() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(e -> s.append("1"));
     eventEmitter.on(e -> s.append("2"));
@@ -42,7 +42,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testMultipleListeners_orderPreserved() {
-    var result = new ArrayList<>();
+    ArrayList<String> result = new ArrayList<String>();
 
     eventEmitter.on(e -> result.add("First"));
     eventEmitter.on(e -> result.add("Second"));
@@ -50,12 +50,12 @@ public class SimpleEventEmitterTest {
 
     eventEmitter.emit("test");
 
-    assertEquals(List.of("First", "Second", "Third"), result);
+    assertEquals(java.util.Arrays.asList("First", "Second", "Third"), result);
   }
 
   @Test
   void testNoArgListener_on() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(() -> s.append("X"));
 
@@ -67,7 +67,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testMixedListenerTypes_bothTriggered() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(e -> s.append(e));
     eventEmitter.on(() -> s.append("-"));
@@ -80,7 +80,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testClear_shouldRemoveAllListeners() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(s::append);
     eventEmitter.on(() -> s.append("X"));
@@ -94,13 +94,14 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testConstructor_withExistingListeners() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
-    var listeners = new ArrayList<SimpleEventEmitter.Listener<String>>();
+    ArrayList<SimpleEventEmitter.Listener<String>> listeners =
+        new ArrayList<SimpleEventEmitter.Listener<String>>();
     listeners.add(e -> s.append("1"));
     listeners.add(e -> s.append("2"));
 
-    var customEmitter = new SimpleEventEmitter<>(listeners);
+    SimpleEventEmitter<String> customEmitter = new SimpleEventEmitter<>(listeners);
     customEmitter.emit("test");
 
     assertEquals("12", s.toString());
@@ -108,19 +109,19 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testChaining_on() {
-    var result = eventEmitter.on(e -> {});
+    SimpleEventEmitter<String> result = eventEmitter.on(e -> {});
     assertSame(eventEmitter, result);
   }
 
   @Test
   void testChaining_clear() {
-    var result = eventEmitter.clear();
+    SimpleEventEmitter<String> result = eventEmitter.clear();
     assertSame(eventEmitter, result);
   }
 
   @Test
   void testChaining_multipleCalls() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter
         .on(e -> s.append("A"))
@@ -135,7 +136,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testEmit_withNullValue() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(e -> s.append(e == null ? "NULL" : e));
 
@@ -146,7 +147,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testEmit_noArgOverload() {
-    var s = new StringBuilder();
+    StringBuilder s = new StringBuilder();
 
     eventEmitter.on(() -> s.append("Called"));
 
@@ -165,7 +166,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testAddSameListenerMultipleTimes() {
-    var counter = new int[]{0};
+    int[] counter = new int[] {0};
     SimpleEventEmitter.Listener<String> listener = e -> counter[0]++;
 
     eventEmitter.on(listener);

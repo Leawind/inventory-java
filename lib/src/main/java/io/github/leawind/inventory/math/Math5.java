@@ -10,7 +10,7 @@ public class Math5 {
    * @return the positive remainder when {@code f1} is divided by {@code f2}
    */
   public static double remainder(double f1, double f2) {
-    var result = Math.IEEEremainder(f1, f2);
+    double result = Math.IEEEremainder(f1, f2);
     return result >= 0 ? result : result + f2;
   }
 

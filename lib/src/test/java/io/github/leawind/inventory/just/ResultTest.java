@@ -2,6 +2,7 @@ package io.github.leawind.inventory.just;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -149,11 +150,11 @@ public class ResultTest {
 
   @Test
   void testIter() {
-    var ok = Result.ok("test");
-    assertEquals(List.of("test"), ok.iter());
+    Result<String, Object> ok = Result.ok("test");
+    assertEquals(Collections.singletonList("test"), ok.iter());
 
-    var err = Result.err(404);
-    assertEquals(List.of(), err.iter());
+    Result<Object, Integer> err = Result.err(404);
+    assertEquals(Collections.emptyList(), err.iter());
   }
 
   @Test

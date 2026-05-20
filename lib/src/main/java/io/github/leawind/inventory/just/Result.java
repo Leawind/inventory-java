@@ -1,5 +1,6 @@
 package io.github.leawind.inventory.just;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -11,7 +12,7 @@ import org.jspecify.annotations.NonNull;
  * @see <a href="https://doc.rust-lang.org/core/result/enum.Result.html">`Result` on
  *     doc.rust-lang.org</a>
  */
-public sealed interface Result<T, E> permits Result.Ok, Result.Err {
+public interface Result<T, E> {
 
   @SuppressWarnings("unchecked")
   static <T, E> Ok<T, E> ok(T value) {
@@ -109,7 +110,16 @@ public sealed interface Result<T, E> permits Result.Ok, Result.Err {
     return this;
   }
 
-  record Ok<T, E>(T value) implements Result<T, E> {
+  final class Ok<T, E> implements Result<T, E> {
+    private final T value;
+
+    Ok(T value) {
+      this.value = value;
+    }
+
+    T value() {
+      return value;
+    }
 
     private static final Ok<?, ?> EMPTY = new Ok<>(null);
 
@@ -186,7 +196,7 @@ public sealed interface Result<T, E> permits Result.Ok, Result.Err {
 
     @Override
     public Iterable<T> iter() {
-      return List.of(value);
+      return Collections.singletonList(value);
     }
 
     @Override
@@ -239,6 +249,19 @@ public sealed interface Result<T, E> permits Result.Ok, Result.Err {
       return value;
     }
 
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof Ok)) return false;
+      Ok<?, ?> ok = (Ok<?, ?>) o;
+      return java.util.Objects.equals(value, ok.value);
+    }
+
+    @Override
+    public int hashCode() {
+      return java.util.Objects.hash(value);
+    }
+
     @NonNull
     @Override
     public String toString() {
@@ -246,7 +269,17 @@ public sealed interface Result<T, E> permits Result.Ok, Result.Err {
     }
   }
 
-  record Err<T, E>(E error) implements Result<T, E> {
+  final class Err<T, E> implements Result<T, E> {
+    private final E error;
+
+    Err(E error) {
+      this.error = error;
+    }
+
+    E error() {
+      return error;
+    }
+
     private static final Err<?, ?> EMPTY = new Err<>(null);
 
     @SuppressWarnings("unchecked")
@@ -322,7 +355,7 @@ public sealed interface Result<T, E> permits Result.Ok, Result.Err {
 
     @Override
     public Iterable<T> iter() {
-      return List.of();
+      return Collections.emptyList();
     }
 
     @Override
@@ -375,6 +408,19 @@ public sealed interface Result<T, E> permits Result.Ok, Result.Err {
       return op.apply(error);
     }
 
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof Err)) return false;
+      Err<?, ?> err = (Err<?, ?>) o;
+      return java.util.Objects.equals(error, err.error);
+    }
+
+    @Override
+    public int hashCode() {
+      return java.util.Objects.hash(error);
+    }
+
     @NonNull
     @Override
     public String toString() {
@@ -382,7 +428,7 @@ public sealed interface Result<T, E> permits Result.Ok, Result.Err {
     }
   }
 
-  private static JustError unwrapFailed(String message, Object error) {
+  static JustError unwrapFailed(String message, Object error) {
     return JustError.panic("%s: %s", message, error);
   }
 }

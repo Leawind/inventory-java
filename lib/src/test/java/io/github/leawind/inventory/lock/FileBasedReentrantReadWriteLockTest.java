@@ -387,34 +387,32 @@ public class FileBasedReentrantReadWriteLockTest {
         Path path = Path.of(lockFilePath);
         FileBasedReentrantReadWriteLock lock = new FileBasedReentrantReadWriteLock(path);
 
-        boolean acquired =
-            switch (lockType) {
-              case READ ->
-                  switch (mode) {
-                    case TRY_LOCK -> lock.readLock().tryLock();
-                    case LOCK -> {
-                      lock.readLock().lock();
-                      yield true;
-                    }
-                  };
-              case WRITE ->
-                  switch (mode) {
-                    case TRY_LOCK -> lock.writeLock().tryLock();
-                    case LOCK -> {
-                      lock.writeLock().lock();
-                      yield true;
-                    }
-                  };
-            };
+        boolean acquired;
+        if (lockType == LockType.READ) {
+          if (mode == Mode.TRY_LOCK) {
+            acquired = lock.readLock().tryLock();
+          } else {
+            lock.readLock().lock();
+            acquired = true;
+          }
+        } else {
+          if (mode == Mode.TRY_LOCK) {
+            acquired = lock.writeLock().tryLock();
+          } else {
+            lock.writeLock().lock();
+            acquired = true;
+          }
+        }
 
         if (acquired) {
           System.out.println("ACQUIRED");
           System.out.flush();
           Thread.sleep(holdTimeMs);
 
-          switch (lockType) {
-            case READ -> lock.readLock().unlock();
-            case WRITE -> lock.writeLock().unlock();
+          if (lockType == LockType.READ) {
+            lock.readLock().unlock();
+          } else {
+            lock.writeLock().unlock();
           }
           System.out.println("RELEASED");
         } else {

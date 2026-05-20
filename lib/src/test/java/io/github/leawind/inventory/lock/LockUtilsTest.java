@@ -8,6 +8,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
+import io.github.leawind.inventory.misc.UncheckedCloseable;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,7 @@ public class LockUtilsTest {
 
   @Test
   void testPlainLock() {
-    try (var ignored = LockUtils.lock(plainLock)) {
+    try (UncheckedCloseable ignored = LockUtils.lock(plainLock)) {
       assertTrue(plainLock.tryLock());
     }
     assertTrue(plainLock.tryLock());
@@ -35,7 +36,7 @@ public class LockUtilsTest {
 
   @Test
   void testWriteLock() {
-    try (var ignored = LockUtils.writeLock(readWriteLock)) {
+    try (UncheckedCloseable ignored = LockUtils.writeLock(readWriteLock)) {
       map.put("key", 123);
     }
     assertEquals(123, map.get("key"));
@@ -44,7 +45,7 @@ public class LockUtilsTest {
   @Test
   void testReadLock() {
     map.put("key", 456);
-    try (var ignored = LockUtils.readLock(readWriteLock)) {
+    try (UncheckedCloseable ignored = LockUtils.readLock(readWriteLock)) {
       assertEquals(456, map.get("key"));
     }
   }
@@ -52,11 +53,13 @@ public class LockUtilsTest {
   @Test
   void testLockReleasedAfterException() {
     ReentrantLock lock = new ReentrantLock();
-    assertThrows(RuntimeException.class, () -> {
-      try (var ignored = LockUtils.lock(lock)) {
-        throw new RuntimeException("test exception");
-      }
-    });
+    assertThrows(
+        RuntimeException.class,
+        () -> {
+          try (UncheckedCloseable ignored = LockUtils.lock(lock)) {
+            throw new RuntimeException("test exception");
+          }
+        });
     assertTrue(lock.tryLock());
     lock.unlock();
   }
@@ -64,9 +67,9 @@ public class LockUtilsTest {
   @Test
   void testNestedLocks() {
     ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
-    try (var ignored = LockUtils.writeLock(rwLock)) {
+    try (UncheckedCloseable ignored = LockUtils.writeLock(rwLock)) {
       map.put("val", 789);
-      try (var ignored2 = LockUtils.readLock(rwLock)) {
+      try (UncheckedCloseable ignored2 = LockUtils.readLock(rwLock)) {
         assertEquals(789, map.get("val"));
       }
     }
@@ -83,19 +86,21 @@ public class LockUtilsTest {
     map.put("shared", 999);
 
     for (int i = 0; i < readerCount; i++) {
-      new Thread(() -> {
-        try {
-          startLatch.await();
-          try (var ignored = LockUtils.readLock(readWriteLock)) {
-            assertEquals(999, map.get("shared"));
-            Thread.sleep(50);
-          }
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        } finally {
-          endLatch.countDown();
-        }
-      }).start();
+      new Thread(
+              () -> {
+                try {
+                  startLatch.await();
+                  try (UncheckedCloseable ignored = LockUtils.readLock(readWriteLock)) {
+                    assertEquals(999, map.get("shared"));
+                    Thread.sleep(50);
+                  }
+                } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                } finally {
+                  endLatch.countDown();
+                }
+              })
+          .start();
     }
 
     startLatch.countDown();
@@ -108,15 +113,17 @@ public class LockUtilsTest {
     CountDownLatch readAttempted = new CountDownLatch(1);
     boolean[] readAcquired = {false};
 
-    Thread writer = new Thread(() -> {
-      try (var ignored = LockUtils.writeLock(readWriteLock)) {
-        map.put("data", 111);
-        writeHeld.countDown();
-        Thread.sleep(200);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-    });
+    Thread writer =
+        new Thread(
+            () -> {
+              try (UncheckedCloseable ignored = LockUtils.writeLock(readWriteLock)) {
+                map.put("data", 111);
+                writeHeld.countDown();
+                Thread.sleep(200);
+              } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+              }
+            });
 
     Thread reader = new Thread(() -> {
       try {

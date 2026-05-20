@@ -32,9 +32,8 @@ tasks.named<ShadowJar>("shadowJar") {
 }
 
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(project.properties["org.gradle.java.version"] as String)
-    }
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 
     withSourcesJar()
     withJavadocJar()

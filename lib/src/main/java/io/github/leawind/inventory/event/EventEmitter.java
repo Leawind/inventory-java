@@ -1,9 +1,9 @@
 package io.github.leawind.inventory.event;
 
-import java.lang.constant.Constable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
@@ -27,7 +27,7 @@ public class EventEmitter<E> {
    *
    * <p>Keyless subscriptions ({@code null} key) are not included.
    */
-  protected final Map<Constable, Subscription<E>> subscriptionsByKey = new HashMap<>();
+  protected final Map<Object, Subscription<E>> subscriptionsByKey = new HashMap<>();
 
   /**
    * Removes all subscribed listeners.
@@ -45,7 +45,7 @@ public class EventEmitter<E> {
    *
    * @param key the lookup key; always returns {@code false} if {@code null}
    */
-  public boolean hasKey(Constable key) {
+  public boolean hasKey(Object key) {
     return subscriptionsByKey.containsKey(key);
   }
 
@@ -54,8 +54,8 @@ public class EventEmitter<E> {
    *
    * @param key the lookup key
    */
-  public @Nullable Listener<E> getListener(Constable key) {
-    var subscription = subscriptionsByKey.get(key);
+  public @Nullable Listener<E> getListener(Object key) {
+    Subscription<E> subscription = subscriptionsByKey.get(key);
     if (subscription == null) {
       return null;
     }
@@ -98,7 +98,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.NoArg<E> listener) {
+  public EventEmitter<E> once(Object key, Listener.NoArg<E> listener) {
     return once(key, (Listener<E>) listener);
   }
 
@@ -108,7 +108,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.Basic<E> listener) {
+  public EventEmitter<E> once(Object key, Listener.Basic<E> listener) {
     return once(key, (Listener<E>) listener);
   }
 
@@ -118,7 +118,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener<E> listener) {
+  public EventEmitter<E> once(Object key, Listener<E> listener) {
     return subscribe(new Subscription<>(key, listener, DEFAULT_PRIORITY, true));
   }
 
@@ -129,7 +129,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.NoArg<E> listener, int priority) {
+  public EventEmitter<E> once(Object key, Listener.NoArg<E> listener, int priority) {
     return once(key, (Listener<E>) listener, priority);
   }
 
@@ -140,7 +140,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.Basic<E> listener, int priority) {
+  public EventEmitter<E> once(Object key, Listener.Basic<E> listener, int priority) {
     return once(key, (Listener<E>) listener, priority);
   }
 
@@ -151,7 +151,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener<E> listener, int priority) {
+  public EventEmitter<E> once(Object key, Listener<E> listener, int priority) {
     return subscribe(new Subscription<>(key, listener, priority, true));
   }
 
@@ -219,7 +219,7 @@ public class EventEmitter<E> {
    * @param key unique, non-null identifier for the listener
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.NoArg<E> listener) {
+  public EventEmitter<E> on(Object key, Listener.NoArg<E> listener) {
     return on(key, (Listener<E>) listener);
   }
 
@@ -230,7 +230,7 @@ public class EventEmitter<E> {
    * @param key unique, non-null identifier for the listener
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.Basic<E> listener) {
+  public EventEmitter<E> on(Object key, Listener.Basic<E> listener) {
     return on(key, (Listener<E>) listener);
   }
 
@@ -241,7 +241,7 @@ public class EventEmitter<E> {
    * @param key unique, non-null identifier for the listener
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener<E> listener) {
+  public EventEmitter<E> on(Object key, Listener<E> listener) {
     return on(key, listener, DEFAULT_PRIORITY);
   }
 
@@ -253,7 +253,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.NoArg<E> listener, int priority) {
+  public EventEmitter<E> on(Object key, Listener.NoArg<E> listener, int priority) {
     return on(key, (Listener<E>) listener, priority);
   }
 
@@ -265,7 +265,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.Basic<E> listener, int priority) {
+  public EventEmitter<E> on(Object key, Listener.Basic<E> listener, int priority) {
     return on(key, (Listener<E>) listener, priority);
   }
 
@@ -277,7 +277,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener<E> listener, int priority) {
+  public EventEmitter<E> on(Object key, Listener<E> listener, int priority) {
     if (key == null) {
       throw new IllegalArgumentException("Listener key must not be null.");
     }
@@ -294,7 +294,7 @@ public class EventEmitter<E> {
     }
 
     // Insert it at the correct position in the list
-    var it = subscriptions.listIterator();
+    ListIterator<Subscription<E>> it = subscriptions.listIterator();
     while (it.hasNext()) {
       if (it.next().priority < subscription.priority) {
         it.previous();
@@ -312,8 +312,8 @@ public class EventEmitter<E> {
    * @param key the key of the listener to remove
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> off(Constable key) {
-    var subscription = this.subscriptionsByKey.remove(key);
+  public EventEmitter<E> off(Object key) {
+    Subscription<E> subscription = this.subscriptionsByKey.remove(key);
     if (subscription != null) {
       subscriptions.remove(subscription);
     }
@@ -328,9 +328,9 @@ public class EventEmitter<E> {
    * @return this emitter (for chaining)
    */
   public EventEmitter<E> off(Listener<E> listener) {
-    var it = subscriptions.listIterator();
+    ListIterator<Subscription<E>> it = subscriptions.listIterator();
     while (it.hasNext()) {
-      var subscription = it.next();
+      Subscription<E> subscription = it.next();
       if (subscription.listener == listener) {
         it.remove();
         if (subscription.key != null) {
@@ -355,11 +355,11 @@ public class EventEmitter<E> {
    * @param event the event payload; may be {@code null}
    */
   public void emit(@Nullable E event) {
-    var it = subscriptions.listIterator();
-    var control = new EventControl();
+    ListIterator<Subscription<E>> it = subscriptions.listIterator();
+    EventControl control = new EventControl();
 
     while (it.hasNext()) {
-      var subscription = it.next();
+      Subscription<E> subscription = it.next();
 
       control.reset();
 
@@ -449,6 +449,17 @@ public class EventEmitter<E> {
     }
   }
 
-  protected record Subscription<E>(
-      @Nullable Constable key, Listener<E> listener, int priority, boolean once) {}
+  protected static final class Subscription<E> {
+    @Nullable final Object key;
+    final Listener<E> listener;
+    final int priority;
+    final boolean once;
+
+    Subscription(@Nullable Object key, Listener<E> listener, int priority, boolean once) {
+      this.key = key;
+      this.listener = listener;
+      this.priority = priority;
+      this.once = once;
+    }
+  }
 }

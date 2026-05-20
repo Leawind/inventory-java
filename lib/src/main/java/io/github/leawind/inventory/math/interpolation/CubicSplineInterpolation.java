@@ -1,8 +1,10 @@
 package io.github.leawind.inventory.math.interpolation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.ListIterator;
 
 public class CubicSplineInterpolation implements Interpolation<Double> {
   // Sorted points by x, low to high
@@ -19,7 +21,7 @@ public class CubicSplineInterpolation implements Interpolation<Double> {
    * @param y1 Value of y at x == 1
    */
   public CubicSplineInterpolation(double y0, double y1) {
-    this(List.of(new Point<>(0, y0), new Point<>(1, y1)));
+    this(Arrays.asList(new Point<>(0, y0), new Point<>(1, y1)));
   }
 
   public CubicSplineInterpolation(List<Point<Double>> points) {
@@ -30,11 +32,11 @@ public class CubicSplineInterpolation implements Interpolation<Double> {
 
   @Override
   public CubicSplineInterpolation add(double x, Double y) {
-    var newPoint = new Point<>(x, y);
+    Point<Double> newPoint = new Point<>(x, y);
 
-    var it = points.listIterator();
+    ListIterator<Point<Double>> it = points.listIterator();
     while (it.hasNext()) {
-      var point = it.next();
+      Point<Double> point = it.next();
 
       if (point.x() == x) {
         it.set(newPoint);

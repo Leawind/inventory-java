@@ -1,9 +1,11 @@
 package io.github.leawind.inventory.math.interpolation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.ListIterator;
 
 public class NewtonInterpolation implements Interpolation<Double> {
   // Sorted points by x, low to high
@@ -14,7 +16,7 @@ public class NewtonInterpolation implements Interpolation<Double> {
   public NewtonInterpolation() {}
 
   public NewtonInterpolation(double y0, double y1) {
-    this(List.of(new Point<>(0, y0), new Point<>(1, y1)));
+    this(Arrays.asList(new Point<>(0, y0), new Point<>(1, y1)));
   }
 
   public NewtonInterpolation(Collection<Point<Double>> points) {
@@ -25,11 +27,11 @@ public class NewtonInterpolation implements Interpolation<Double> {
 
   @Override
   public NewtonInterpolation add(double x, Double y) {
-    var newPoint = new Point<>(x, y);
+    Point<Double> newPoint = new Point<>(x, y);
 
-    var it = points.listIterator();
+    ListIterator<Point<Double>> it = points.listIterator();
     while (it.hasNext()) {
-      var point = it.next();
+      Point<Double> point = it.next();
 
       if (point.x() == x) {
         it.set(newPoint);

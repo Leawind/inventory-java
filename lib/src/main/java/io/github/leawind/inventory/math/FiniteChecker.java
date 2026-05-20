@@ -149,14 +149,14 @@ public final class FiniteChecker {
 
   @SuppressWarnings("unchecked")
   public <T> boolean isFinite(Object obj) {
-    if (obj instanceof Integer i) {
+    if (obj instanceof Integer) {
       return true;
     }
-    if (obj instanceof Float f) {
-      return Float.isFinite(f);
+    if (obj instanceof Float) {
+      return Float.isFinite((Float) obj);
     }
-    if (obj instanceof Double d) {
-      return Double.isFinite(d);
+    if (obj instanceof Double) {
+      return Double.isFinite((Double) obj);
     }
 
     Class<T> clazz = (Class<T>) obj.getClass();

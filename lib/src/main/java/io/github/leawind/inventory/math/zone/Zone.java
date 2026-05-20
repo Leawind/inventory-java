@@ -114,7 +114,7 @@ public class Zone {
   }
 
   public Zone expand(double delta) throws IllegalArgumentException {
-    final var limit = -radius();
+    final double limit = -radius();
     if (delta < limit) {
       throw new IllegalArgumentException("Expanded radius must be no less than " + limit);
     }
@@ -125,7 +125,7 @@ public class Zone {
   }
 
   public Zone expand(double leftDelta, double rightDelta) throws IllegalArgumentException {
-    final var limit = -radius();
+    final double limit = -radius();
     if (leftDelta < limit) {
       throw new IllegalArgumentException("leftDelta < - radius: " + leftDelta + "<" + limit);
     }
@@ -341,7 +341,8 @@ public class Zone {
     if (obj == null) {
       return false;
     }
-    if (obj instanceof Zone zone) {
+    if (obj instanceof Zone) {
+      Zone zone = (Zone) obj;
       return min == zone.min && max == zone.max;
     }
     return false;

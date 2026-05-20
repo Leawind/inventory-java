@@ -45,14 +45,14 @@ public class JustBenchmark {
 
   @Benchmark
   public void benchmarkJust(Blackhole bh) {
-    var summer = new Summer();
+    Summer summer = new Summer();
     justProcess(summer, array);
     bh.consume(summer);
   }
 
   @Benchmark
   public void benchmarkTryCatch(Blackhole bh) {
-    var summer = new Summer();
+    Summer summer = new Summer();
     tryCatchProcess(summer, array);
     bh.consume(summer);
   }
@@ -67,10 +67,12 @@ public class JustBenchmark {
 
   void justProcess(Summer summer, float[] array) {
     for (float v : array) {
-      var result = justProcess(v);
-      if (result instanceof Result.Ok<Float, ?> ok) {
+      Result<Float, Float> result = justProcess(v);
+      if (result instanceof Result.Ok) {
+        Result.Ok<Float, Float> ok = (Result.Ok<Float, Float>) result;
         summer.sum += ok.unwrap();
-      } else if (result instanceof Result.Err<?, Float> err) {
+      } else if (result instanceof Result.Err) {
+        Result.Err<Float, Float> err = (Result.Err<Float, Float>) result;
         summer.errors.add(err.unwrapErr());
       }
     }
@@ -110,14 +112,14 @@ public class JustBenchmark {
   public static void main(String[] args) throws InterruptedException {
     int size = 22;
     for (int i = 0; i < 16; i++) {
-      var b1 = new JustBenchmark();
+      JustBenchmark b1 = new JustBenchmark();
       b1.log2Size = size;
       b1.errorRate = 0.5f;
       b1.setup();
       b1.justProcess(new Summer(), b1.array);
       Thread.sleep(500);
 
-      var b2 = new JustBenchmark();
+      JustBenchmark b2 = new JustBenchmark();
       b2.log2Size = size;
       b2.errorRate = 0.5f;
       b2.setup();

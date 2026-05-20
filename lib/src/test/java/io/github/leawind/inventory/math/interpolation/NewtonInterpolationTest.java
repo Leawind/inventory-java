@@ -2,7 +2,7 @@ package io.github.leawind.inventory.math.interpolation;
 
 public class NewtonInterpolationTest {
   public static void main(String[] args) {
-    var it =
+    NewtonInterpolation it =
         new NewtonInterpolation() //
             .add(0, 0d)
             .add(0.25, 0.1d)

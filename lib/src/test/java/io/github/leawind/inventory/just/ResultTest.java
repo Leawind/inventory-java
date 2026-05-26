@@ -3,7 +3,6 @@ package io.github.leawind.inventory.just;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Collections;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 
 public class ResultTest {

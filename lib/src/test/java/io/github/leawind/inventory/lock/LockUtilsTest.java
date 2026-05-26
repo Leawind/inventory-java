@@ -2,13 +2,13 @@ package io.github.leawind.inventory.lock;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.github.leawind.inventory.misc.UncheckedCloseable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
-import io.github.leawind.inventory.misc.UncheckedCloseable;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -125,16 +125,18 @@ public class LockUtilsTest {
               }
             });
 
-    Thread reader = new Thread(() -> {
-      try {
-        writeHeld.await();
-        readAcquired[0] = readWriteLock.readLock().tryLock();
-        if (readAcquired[0]) readWriteLock.readLock().unlock();
-        readAttempted.countDown();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-    });
+    Thread reader =
+        new Thread(
+            () -> {
+              try {
+                writeHeld.await();
+                readAcquired[0] = readWriteLock.readLock().tryLock();
+                if (readAcquired[0]) readWriteLock.readLock().unlock();
+                readAttempted.countDown();
+              } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+              }
+            });
 
     writer.start();
     reader.start();

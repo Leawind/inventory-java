@@ -3,7 +3,6 @@ package io.github.leawind.inventory.event;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -123,11 +122,7 @@ public class SimpleEventEmitterTest {
   void testChaining_multipleCalls() {
     StringBuilder s = new StringBuilder();
 
-    eventEmitter
-        .on(e -> s.append("A"))
-        .on(e -> s.append("B"))
-        .clear()
-        .on(e -> s.append("C"));
+    eventEmitter.on(e -> s.append("A")).on(e -> s.append("B")).clear().on(e -> s.append("C"));
 
     eventEmitter.emit("test");
 

@@ -48,8 +48,18 @@ public abstract class ValidatingHashMap<K, V> extends HashMap<K, V> {
     validateMap(m);
   }
 
+  /**
+   * Validate an entry
+   *
+   * <p>Should not consider the current state of this map
+   */
   public void validateEntry(K key, V value) {}
 
+  /**
+   * Validate all entries in the map
+   *
+   * <p>Should not consider the current state of `this`
+   */
   public void validateMap(Map<? extends K, ? extends V> m) {
     m.forEach(this::validateEntry);
   }

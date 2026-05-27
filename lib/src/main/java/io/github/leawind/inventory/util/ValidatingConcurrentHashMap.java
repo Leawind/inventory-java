@@ -59,6 +59,8 @@ public abstract class ValidatingConcurrentHashMap<K, V> extends ConcurrentHashMa
    * default implementation does nothing; subclasses are expected to override it and throw an
    * exception if the entry is considered invalid.
    *
+   * <p>Should not consider the current state of this map
+   *
    * @param key the key to validate
    * @param value the value to validate
    */
@@ -67,6 +69,8 @@ public abstract class ValidatingConcurrentHashMap<K, V> extends ConcurrentHashMa
   /**
    * Validates all entries in the given map. The default implementation simply delegates to {@link
    * #validateEntry(Object, Object)} for each entry.
+   *
+   * <p>Should not consider the current state of `this`
    *
    * @param m the map whose entries should be validated
    */

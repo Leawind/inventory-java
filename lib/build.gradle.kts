@@ -18,6 +18,9 @@ dependencies {
     // Assertion Library
     testImplementation(libs.hamcrest)
 
+    // Memory File System
+    testImplementation("com.google.jimfs:jimfs:1.3.0")
+
     // JMH for performance testing
     testImplementation(libs.jmh.core)
     testAnnotationProcessor(libs.jmh.generator.annprocess)

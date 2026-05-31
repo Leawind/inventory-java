@@ -24,7 +24,7 @@ public class Math5Test {
   @Test
   void testLerpDegrees() {
     for (int i = -10; i < 10; i++) {
-      int ofs = i * 360;
+      var ofs = i * 360;
 
       assertThat(lerpDegrees(0, 45 + ofs, 0.5), closeTo(22.5, DELTA));
       assertThat(lerpDegrees(0, 90 + ofs, 0.5), closeTo(45, DELTA));

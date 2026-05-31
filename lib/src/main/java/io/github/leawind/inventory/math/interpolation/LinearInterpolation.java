@@ -1,11 +1,9 @@
 package io.github.leawind.inventory.math.interpolation;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.ListIterator;
 
 public class LinearInterpolation implements Interpolation<Double> {
   // Sorted points by x, low to high
@@ -18,7 +16,7 @@ public class LinearInterpolation implements Interpolation<Double> {
    * @param y1 Value of y at x == 1
    */
   public LinearInterpolation(double y0, double y1) {
-    this(Arrays.asList(new Point<>(0, y0), new Point<>(1, y1)));
+    this(List.of(new Point<>(0, y0), new Point<>(1, y1)));
   }
 
   public LinearInterpolation(Collection<Point<Double>> points) {
@@ -28,11 +26,11 @@ public class LinearInterpolation implements Interpolation<Double> {
 
   @Override
   public LinearInterpolation add(double x, Double y) {
-    Point<Double> newPoint = new Point<>(x, y);
+    var newPoint = new Point<>(x, y);
 
-    ListIterator<Point<Double>> it = points.listIterator();
+    var it = points.listIterator();
     while (it.hasNext()) {
-      Point<Double> point = it.next();
+      var point = it.next();
 
       if (point.x() == x) {
         it.set(newPoint);
@@ -62,11 +60,11 @@ public class LinearInterpolation implements Interpolation<Double> {
       return points.get(points.size() - 1).y();
     }
     for (int i = 0; i < points.size() - 1; i++) {
-      Point<Double> point = points.get(i);
+      var point = points.get(i);
       if (point.x() <= x && x <= points.get(i + 1).x()) {
-        Double a = point.y();
-        Double b = points.get(i + 1).y();
-        double t = (x - point.x()) / (points.get(i + 1).x() - point.x());
+        var a = point.y();
+        var b = points.get(i + 1).y();
+        var t = (x - point.x()) / (points.get(i + 1).x() - point.x());
         return a + (b - a) * t;
       }
     }

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 public class LinearInterpolationTest {
   @Test
   void test() {
-    LinearInterpolation it = new LinearInterpolation(0, 1);
+    var it = new LinearInterpolation(0, 1);
     assert it.interpolate(-1) == 0;
     assert it.interpolate(0) == 0;
     assert it.interpolate(0.25) == 0.25;
@@ -17,7 +17,7 @@ public class LinearInterpolationTest {
 
   @Test
   void test2() {
-    LinearInterpolation it =
+    var it =
         new LinearInterpolation() //
             .add(0, 0d)
             .add(-2, -1d)

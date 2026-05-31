@@ -1,6 +1,6 @@
 package io.github.leawind.inventory.just;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -11,7 +11,7 @@ import org.jspecify.annotations.NonNull;
  * @see <a href="https://doc.rust-lang.org/core/result/enum.Result.html">`Result` on
  *     doc.rust-lang.org</a>
  */
-public interface Result<T, E> {
+public sealed interface Result<T, E> permits Result.Ok, Result.Err {
 
   @SuppressWarnings("unchecked")
   static <T, E> Ok<T, E> ok(T value) {
@@ -109,16 +109,7 @@ public interface Result<T, E> {
     return this;
   }
 
-  final class Ok<T, E> implements Result<T, E> {
-    private final T value;
-
-    Ok(T value) {
-      this.value = value;
-    }
-
-    T value() {
-      return value;
-    }
+  record Ok<T, E>(T value) implements Result<T, E> {
 
     private static final Ok<?, ?> EMPTY = new Ok<>(null);
 
@@ -195,7 +186,7 @@ public interface Result<T, E> {
 
     @Override
     public Iterable<T> iter() {
-      return Collections.singletonList(value);
+      return List.of(value);
     }
 
     @Override
@@ -248,19 +239,6 @@ public interface Result<T, E> {
       return value;
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof Ok)) return false;
-      Ok<?, ?> ok = (Ok<?, ?>) o;
-      return java.util.Objects.equals(value, ok.value);
-    }
-
-    @Override
-    public int hashCode() {
-      return java.util.Objects.hash(value);
-    }
-
     @NonNull
     @Override
     public String toString() {
@@ -268,17 +246,7 @@ public interface Result<T, E> {
     }
   }
 
-  final class Err<T, E> implements Result<T, E> {
-    private final E error;
-
-    Err(E error) {
-      this.error = error;
-    }
-
-    E error() {
-      return error;
-    }
-
+  record Err<T, E>(E error) implements Result<T, E> {
     private static final Err<?, ?> EMPTY = new Err<>(null);
 
     @SuppressWarnings("unchecked")
@@ -354,7 +322,7 @@ public interface Result<T, E> {
 
     @Override
     public Iterable<T> iter() {
-      return Collections.emptyList();
+      return List.of();
     }
 
     @Override
@@ -407,19 +375,6 @@ public interface Result<T, E> {
       return op.apply(error);
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof Err)) return false;
-      Err<?, ?> err = (Err<?, ?>) o;
-      return java.util.Objects.equals(error, err.error);
-    }
-
-    @Override
-    public int hashCode() {
-      return java.util.Objects.hash(error);
-    }
-
     @NonNull
     @Override
     public String toString() {
@@ -427,7 +382,7 @@ public interface Result<T, E> {
     }
   }
 
-  static JustError unwrapFailed(String message, Object error) {
+  private static JustError unwrapFailed(String message, Object error) {
     return JustError.panic("%s: %s", message, error);
   }
 }

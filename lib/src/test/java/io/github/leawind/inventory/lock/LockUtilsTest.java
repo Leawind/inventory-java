@@ -2,7 +2,6 @@ package io.github.leawind.inventory.lock;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import io.github.leawind.inventory.misc.UncheckedCloseable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -27,7 +26,7 @@ public class LockUtilsTest {
 
   @Test
   void testPlainLock() {
-    try (UncheckedCloseable ignored = LockUtils.lock(plainLock)) {
+    try (var ignored = LockUtils.lock(plainLock)) {
       assertTrue(plainLock.tryLock());
     }
     assertTrue(plainLock.tryLock());
@@ -36,7 +35,7 @@ public class LockUtilsTest {
 
   @Test
   void testWriteLock() {
-    try (UncheckedCloseable ignored = LockUtils.writeLock(readWriteLock)) {
+    try (var ignored = LockUtils.writeLock(readWriteLock)) {
       map.put("key", 123);
     }
     assertEquals(123, map.get("key"));
@@ -45,7 +44,7 @@ public class LockUtilsTest {
   @Test
   void testReadLock() {
     map.put("key", 456);
-    try (UncheckedCloseable ignored = LockUtils.readLock(readWriteLock)) {
+    try (var ignored = LockUtils.readLock(readWriteLock)) {
       assertEquals(456, map.get("key"));
     }
   }
@@ -56,7 +55,7 @@ public class LockUtilsTest {
     assertThrows(
         RuntimeException.class,
         () -> {
-          try (UncheckedCloseable ignored = LockUtils.lock(lock)) {
+          try (var ignored = LockUtils.lock(lock)) {
             throw new RuntimeException("test exception");
           }
         });
@@ -67,9 +66,9 @@ public class LockUtilsTest {
   @Test
   void testNestedLocks() {
     ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
-    try (UncheckedCloseable ignored = LockUtils.writeLock(rwLock)) {
+    try (var ignored = LockUtils.writeLock(rwLock)) {
       map.put("val", 789);
-      try (UncheckedCloseable ignored2 = LockUtils.readLock(rwLock)) {
+      try (var ignored2 = LockUtils.readLock(rwLock)) {
         assertEquals(789, map.get("val"));
       }
     }
@@ -90,7 +89,7 @@ public class LockUtilsTest {
               () -> {
                 try {
                   startLatch.await();
-                  try (UncheckedCloseable ignored = LockUtils.readLock(readWriteLock)) {
+                  try (var ignored = LockUtils.readLock(readWriteLock)) {
                     assertEquals(999, map.get("shared"));
                     Thread.sleep(50);
                   }
@@ -116,7 +115,7 @@ public class LockUtilsTest {
     Thread writer =
         new Thread(
             () -> {
-              try (UncheckedCloseable ignored = LockUtils.writeLock(readWriteLock)) {
+              try (var ignored = LockUtils.writeLock(readWriteLock)) {
                 map.put("data", 111);
                 writeHeld.countDown();
                 Thread.sleep(200);

@@ -8,7 +8,7 @@ public interface Interpolation<T> {
   Interpolation<T> add(double x, T y);
 
   default Interpolation<T> add(Collection<Point<T>> points) {
-    for (Point<T> point : points) {
+    for (var point : points) {
       add(point.x(), point.y());
     }
     return this;
@@ -32,7 +32,7 @@ public interface Interpolation<T> {
   }
 
   static <T> boolean hasDuplicatedPoint(List<Point<T>> points, Point<T> newPoint) {
-    for (Point<T> point : points) {
+    for (var point : points) {
       if (point.x() == newPoint.x()) {
         return true;
       }
@@ -40,22 +40,7 @@ public interface Interpolation<T> {
     return false;
   }
 
-  final class Point<T> {
-    private final double x;
-    private final T y;
-
-    Point(double x, T y) {
-      this.x = x;
-      this.y = y;
-    }
-
-    double x() {
-      return x;
-    }
-
-    T y() {
-      return y;
-    }
+  record Point<T>(double x, T y) {
 
     public static <T> Point<T>[] asArray(double[] x, T[] y) {
       @SuppressWarnings("unchecked")
@@ -67,7 +52,7 @@ public interface Interpolation<T> {
     }
 
     public static <T> List<Point<T>> asList(double[] x, T[] y) {
-      ArrayList<Point<T>> list = new ArrayList<Point<T>>();
+      var list = new ArrayList<Point<T>>();
       for (int i = 0; i < x.length; i++) {
         list.add(new Point<>(x[i], y[i]));
       }

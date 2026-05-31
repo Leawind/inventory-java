@@ -3,7 +3,7 @@ package io.github.leawind.inventory.math.interpolation;
 public class CubicSplineInterpolationTest {
 
   public static void main(String[] args) {
-    CubicSplineInterpolation it =
+    var it =
         new CubicSplineInterpolation() //
             .add(0, 0d)
             .add(0.25, 0.1d)

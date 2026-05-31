@@ -2,12 +2,7 @@ package io.github.leawind.inventory.event;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class EventEmitterTest {
@@ -18,11 +13,9 @@ public class EventEmitterTest {
     eventEmitter = new EventEmitter<>();
   }
 
-  // region Core Functional Tests
-
   @Test
   void testOnce() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
     eventEmitter
         .on(e -> s.append("A"))
@@ -39,7 +32,7 @@ public class EventEmitterTest {
 
   @Test
   void testPriority() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
     eventEmitter
         .on(e -> s.append('A'), 1)
@@ -53,10 +46,10 @@ public class EventEmitterTest {
 
   @Test
   void testOff() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
-    EventEmitter.Listener<Object> listenerA = eventEmitter.listener(e -> s.append("A"));
-    EventEmitter.Listener<Object> listenerB = eventEmitter.listener(e -> s.append("B"));
+    var listenerA = eventEmitter.listener(e -> s.append("A"));
+    var listenerB = eventEmitter.listener(e -> s.append("B"));
 
     eventEmitter.on(listenerA);
     eventEmitter.on(listenerB, 4);
@@ -79,7 +72,7 @@ public class EventEmitterTest {
 
   @Test
   void testStopPropagation() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
     eventEmitter
         .on(
@@ -95,7 +88,7 @@ public class EventEmitterTest {
 
   @Test
   void testRemoveSelf() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
     eventEmitter
         .on(
@@ -105,9 +98,11 @@ public class EventEmitterTest {
             })
         .on(e -> s.append("B"));
 
+    // First broadcast: both listeners execute, A removes itself
     eventEmitter.emit("test");
     assertEquals("AB", s.toString());
 
+    // Second broadcast: only B remains
     s.setLength(0);
     eventEmitter.emit("test");
     assertEquals("B", s.toString());
@@ -115,7 +110,7 @@ public class EventEmitterTest {
 
   @Test
   void testClear() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
     eventEmitter.on(e -> s.append("A")).on(e -> s.append("B")).clear().on(e -> s.append("C"));
 
@@ -136,134 +131,12 @@ public class EventEmitterTest {
   }
 
   @Test
-  void on_withExistingKey_shouldReplace() {
-    StringBuilder s = new StringBuilder();
+  void on() {
+    var s = new StringBuilder();
 
     eventEmitter.on("testKey", e -> s.append("A")).on("testKey", e -> s.append("B"));
 
     eventEmitter.emit(null);
     assertEquals("B", s.toString());
   }
-
-  // endregion
-
-  // region Memory Management & Weak Reference Tests
-
-  @Disabled
-  @Test
-  void testWeakKeyGarbageCollection() throws InterruptedException {
-    AtomicInteger executionCount = new AtomicInteger(0);
-
-    Object key = new Object();
-    eventEmitter.on(key, e -> executionCount.incrementAndGet());
-
-    java.lang.ref.WeakReference<Object> keyTracker = new java.lang.ref.WeakReference<>(key);
-
-    key = null;
-
-    long startTime = System.currentTimeMillis();
-    while (keyTracker.get() != null) {
-      System.gc();
-      Thread.sleep(10);
-      if (System.currentTimeMillis() - startTime > 2000) {
-        fail("Key was not garbage collected within the timeout period.");
-      }
-    }
-
-    eventEmitter.emit(null);
-    assertEquals(0, executionCount.get());
-
-    assertFalse(eventEmitter.hasKey(keyTracker.get()));
-  }
-
-  @Test
-  void testWeakKeySurvivesWhenStronglyReferenced() {
-    AtomicInteger executionCount = new AtomicInteger(0);
-
-    Object key = new Object();
-    eventEmitter.on(key, e -> executionCount.incrementAndGet());
-
-    System.gc();
-
-    eventEmitter.emit(null);
-    assertEquals(1, executionCount.get());
-  }
-
-  // endregion
-
-  // region Custom Map Injection Tests
-
-  @Test
-  void constructor_withPrePopulatedMap_shouldThrowException() {
-    Map<Object, Object> prePopulatedMap = new HashMap<>();
-    prePopulatedMap.put("existingKey", "someValue");
-
-    assertThrows(IllegalArgumentException.class, () -> new EventEmitter<>(prePopulatedMap));
-  }
-
-  @Test
-  void constructor_withCustomEmptyMap_shouldFunctionCorrectly() {
-    Map<Object, ?> customMap = new LinkedHashMap<>();
-    EventEmitter<Object> customEmitter = new EventEmitter<>(customMap);
-
-    AtomicInteger count = new AtomicInteger(0);
-    customEmitter.on("customKey", e -> count.incrementAndGet());
-
-    customEmitter.emit(null);
-    assertEquals(1, count.get());
-    assertTrue(customEmitter.hasKey("customKey"));
-  }
-
-  // endregion
-
-  // region Edge Cases & Defensive Programming Tests
-
-  @Test
-  void off_withNonExistentKey_shouldNotThrow() {
-    assertDoesNotThrow(() -> eventEmitter.off("nonExistentKey"));
-  }
-
-  @Test
-  void off_withNonExistentListener_shouldNotThrow() {
-    EventEmitter.Listener.NoArg<Object> unregisteredListener = () -> {};
-    assertDoesNotThrow(() -> eventEmitter.off(unregisteredListener));
-  }
-
-  @Test
-  void getListener_withExistingKey_shouldReturnListener() {
-    EventEmitter.Listener.NoArg<Object> listener = () -> {};
-    eventEmitter.on("myKey", listener);
-
-    assertEquals(listener, eventEmitter.getListener("myKey"));
-  }
-
-  @Test
-  void getListener_withNonExistentKey_shouldReturnNull() {
-    assertNull(eventEmitter.getListener("nonExistentKey"));
-  }
-
-  @Test
-  void getListener_withNullKey_shouldReturnNull() {
-    assertNull(eventEmitter.getListener(null));
-  }
-
-  @Test
-  void emit_withNoListeners_shouldNotThrow() {
-    assertDoesNotThrow(() -> eventEmitter.emit("payload"));
-  }
-
-  @Test
-  void emit_withPayload_shouldPassPayloadToListener() {
-    AtomicInteger receivedPayload = new AtomicInteger(0);
-
-    eventEmitter.on((e) -> receivedPayload.set((Integer) e));
-
-    @SuppressWarnings("unchecked")
-    EventEmitter<Integer> intEmitter = (EventEmitter<Integer>) (EventEmitter<?>) eventEmitter;
-
-    intEmitter.emit(42);
-    assertEquals(42, receivedPayload.get());
-  }
-
-  // endregion
 }

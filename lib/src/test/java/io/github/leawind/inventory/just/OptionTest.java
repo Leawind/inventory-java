@@ -191,12 +191,12 @@ public class OptionTest {
   @Test
   void testOkOr() {
     Option<String> some = Option.some("test");
-    Result<String, String> result = some.okOr("error");
+    var result = some.okOr("error");
     assertTrue(result.isOk());
     assertEquals("test", result.unwrap());
 
     Option<String> none = Option.none();
-    Result<String, String> resultNone = none.okOr("error");
+    var resultNone = none.okOr("error");
     assertTrue(resultNone.isErr());
     assertEquals("error", resultNone.unwrapErr());
   }
@@ -204,12 +204,12 @@ public class OptionTest {
   @Test
   void testOkOrElse() {
     Option<String> some = Option.some("test");
-    Result<String, String> result = some.okOrElse(() -> "error");
+    var result = some.okOrElse(() -> "error");
     assertTrue(result.isOk());
     assertEquals("test", result.unwrap());
 
     Option<String> none = Option.none();
-    Result<String, String> resultNone = none.okOrElse(() -> "error");
+    var resultNone = none.okOrElse(() -> "error");
     assertTrue(resultNone.isErr());
     assertEquals("error", resultNone.unwrapErr());
   }
@@ -217,15 +217,15 @@ public class OptionTest {
   @Test
   void testIter() {
     Option<String> some = Option.some("test");
-    Iterable<String> iterable = some.iter();
-    java.util.Iterator<String> iterator = iterable.iterator();
+    var iterable = some.iter();
+    var iterator = iterable.iterator();
     assertTrue(iterator.hasNext());
     assertEquals("test", iterator.next());
     assertFalse(iterator.hasNext());
 
     Option<String> none = Option.none();
-    Iterable<String> iterableNone = none.iter();
-    java.util.Iterator<String> iteratorNone = iterableNone.iterator();
+    var iterableNone = none.iter();
+    var iteratorNone = iterableNone.iterator();
     assertFalse(iteratorNone.hasNext());
   }
 

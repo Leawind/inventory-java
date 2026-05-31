@@ -37,7 +37,7 @@ public class DequeObjectPool<T> implements ObjectPool<T> {
 
   @Override
   public T acquire() {
-    T obj = queue.poll();
+    var obj = queue.poll();
     if (obj == null) {
       obj = factory.get();
     }

@@ -1,6 +1,6 @@
 package io.github.leawind.inventory.just;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -11,7 +11,7 @@ import java.util.function.Supplier;
  * @see <a href="https://doc.rust-lang.org/core/option/enum.Option.html">`Option` on
  *     doc.rust-lang.org</a>
  */
-public interface Option<T> {
+public sealed interface Option<T> {
 
   @SuppressWarnings("unchecked")
   static <T> Option<T> some(T value) {
@@ -177,7 +177,7 @@ public interface Option<T> {
 
     @Override
     public Iterable<T> iter() {
-      return Collections.singletonList(value);
+      return List.of(value);
     }
 
     @Override
@@ -208,19 +208,6 @@ public interface Option<T> {
     @Override
     public Option<T> xor(Option<T> optb) {
       return optb.isSome() ? none() : this;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof Some)) return false;
-      Some<?> some = (Some<?>) o;
-      return java.util.Objects.equals(value, some.value);
-    }
-
-    @Override
-    public int hashCode() {
-      return java.util.Objects.hash(value);
     }
   }
 
@@ -309,7 +296,7 @@ public interface Option<T> {
 
     @Override
     public Iterable<T> iter() {
-      return Collections.emptyList();
+      return List.of();
     }
 
     @Override
@@ -343,11 +330,11 @@ public interface Option<T> {
     }
   }
 
-  static JustError unwrapFailed() {
+  private static JustError unwrapFailed() {
     return JustError.panic("called `Option#unwrap()` on a `None` value");
   }
 
-  static JustError expectFailed(String msg) {
+  private static JustError expectFailed(String msg) {
     return JustError.panic(msg);
   }
 }

@@ -21,9 +21,9 @@ public class JustTest {
 
   @Test
   void examples() {
-    byte a = (byte) 127;
-    byte b = (byte) 1;
-    Result<Byte, String> c = add(a, b);
+    var a = (byte) 127;
+    var b = (byte) 1;
+    var c = add(a, b);
     assertEquals(Result.err("overflow"), c);
 
     assertThrows(JustError.class, this::toPanic);

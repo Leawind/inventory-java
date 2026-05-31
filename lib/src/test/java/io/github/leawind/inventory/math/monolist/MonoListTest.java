@@ -23,7 +23,7 @@ public class MonoListTest {
   }
 
   @Nested
-  static class LinearMonoListImplTest {
+  class LinearMonoListImplTest {
     static Stream<MonoList> provideLinearMonoListImpl() {
       return Stream.of(StaticMonoList.linear(10), DeferedMonoList.linear(10));
     }

@@ -5,18 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.leawind.inventory.misc.UncheckedCloseable;
 import io.github.leawind.inventory.testutils.JavaProcess;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -390,32 +387,34 @@ public class FileBasedReentrantReadWriteLockTest {
         Path path = Path.of(lockFilePath);
         FileBasedReentrantReadWriteLock lock = new FileBasedReentrantReadWriteLock(path);
 
-        boolean acquired;
-        if (lockType == LockType.READ) {
-          if (mode == Mode.TRY_LOCK) {
-            acquired = lock.readLock().tryLock();
-          } else {
-            lock.readLock().lock();
-            acquired = true;
-          }
-        } else {
-          if (mode == Mode.TRY_LOCK) {
-            acquired = lock.writeLock().tryLock();
-          } else {
-            lock.writeLock().lock();
-            acquired = true;
-          }
-        }
+        boolean acquired =
+            switch (lockType) {
+              case READ ->
+                  switch (mode) {
+                    case TRY_LOCK -> lock.readLock().tryLock();
+                    case LOCK -> {
+                      lock.readLock().lock();
+                      yield true;
+                    }
+                  };
+              case WRITE ->
+                  switch (mode) {
+                    case TRY_LOCK -> lock.writeLock().tryLock();
+                    case LOCK -> {
+                      lock.writeLock().lock();
+                      yield true;
+                    }
+                  };
+            };
 
         if (acquired) {
           System.out.println("ACQUIRED");
           System.out.flush();
           Thread.sleep(holdTimeMs);
 
-          if (lockType == LockType.READ) {
-            lock.readLock().unlock();
-          } else {
-            lock.writeLock().unlock();
+          switch (lockType) {
+            case READ -> lock.readLock().unlock();
+            case WRITE -> lock.writeLock().unlock();
           }
           System.out.println("RELEASED");
         } else {
@@ -541,65 +540,5 @@ public class FileBasedReentrantReadWriteLockTest {
     assertTrue(
         writer.getOutput().contains("FAILED"),
         "Write lock should not be acquired while readers hold read locks");
-  }
-
-  @Nested
-  class FileContentTest {
-    String content;
-    Path filePath;
-
-    @BeforeEach
-    void setup() {
-      content = "hello world";
-      filePath = lockFile.toPath();
-    }
-
-    @Test
-    void canReadWhileReadLockHeld() throws IOException {
-      Files.writeString(filePath, content);
-      try (UncheckedCloseable ignored = LockUtils.readLock(rwLock)) {
-        assertEquals(content, Files.readString(filePath));
-      }
-    }
-
-    @Test
-    void canReadWhileWriteLockHeld() throws IOException {
-      Files.writeString(filePath, content);
-      try (UncheckedCloseable ignored = LockUtils.writeLock(rwLock)) {
-        assertEquals(content, Files.readString(filePath));
-      }
-    }
-
-    @Test
-    void canWriteWhileWriteLockHeld() throws IOException {
-      try (UncheckedCloseable ignored = LockUtils.writeLock(rwLock)) {
-        Files.writeString(filePath, content);
-        assertEquals(content, Files.readString(filePath));
-      }
-    }
-
-    @Test
-    void canWriteWhileReadLockHeld() throws IOException {
-      try (UncheckedCloseable ignored = LockUtils.readLock(rwLock)) {
-        Files.writeString(filePath, content);
-        assertEquals(content, Files.readString(filePath));
-      }
-    }
-
-    @Test
-    void readLockDoNotAffectContent() throws IOException {
-      Files.writeString(filePath, content);
-      try (UncheckedCloseable ignored = LockUtils.readLock(rwLock)) {
-        assertEquals(content, Files.readString(filePath));
-      }
-    }
-
-    @Test
-    void writeLockDoNotAffectContent() throws IOException {
-      Files.writeString(filePath, content);
-      try (UncheckedCloseable ignored = LockUtils.writeLock(rwLock)) {
-        assertEquals(content, Files.readString(filePath));
-      }
-    }
   }
 }

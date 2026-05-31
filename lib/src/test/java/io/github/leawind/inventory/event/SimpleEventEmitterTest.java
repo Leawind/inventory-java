@@ -3,6 +3,7 @@ package io.github.leawind.inventory.event;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testOn_and_emit() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
     eventEmitter.on(s::append);
     eventEmitter.emit("A");
@@ -28,7 +29,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testMultipleListeners_allShouldBeTriggered() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
     eventEmitter.on(e -> s.append("1"));
     eventEmitter.on(e -> s.append("2"));
@@ -41,7 +42,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testMultipleListeners_orderPreserved() {
-    ArrayList<String> result = new ArrayList<String>();
+    var result = new ArrayList<>();
 
     eventEmitter.on(e -> result.add("First"));
     eventEmitter.on(e -> result.add("Second"));
@@ -49,12 +50,12 @@ public class SimpleEventEmitterTest {
 
     eventEmitter.emit("test");
 
-    assertEquals(java.util.Arrays.asList("First", "Second", "Third"), result);
+    assertEquals(List.of("First", "Second", "Third"), result);
   }
 
   @Test
   void testNoArgListener_on() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
     eventEmitter.on(() -> s.append("X"));
 
@@ -66,7 +67,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testMixedListenerTypes_bothTriggered() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
     eventEmitter.on(e -> s.append(e));
     eventEmitter.on(() -> s.append("-"));
@@ -79,7 +80,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testClear_shouldRemoveAllListeners() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
     eventEmitter.on(s::append);
     eventEmitter.on(() -> s.append("X"));
@@ -93,14 +94,13 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testConstructor_withExistingListeners() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
-    ArrayList<SimpleEventEmitter.Listener<String>> listeners =
-        new ArrayList<SimpleEventEmitter.Listener<String>>();
+    var listeners = new ArrayList<SimpleEventEmitter.Listener<String>>();
     listeners.add(e -> s.append("1"));
     listeners.add(e -> s.append("2"));
 
-    SimpleEventEmitter<String> customEmitter = new SimpleEventEmitter<>(listeners);
+    var customEmitter = new SimpleEventEmitter<>(listeners);
     customEmitter.emit("test");
 
     assertEquals("12", s.toString());
@@ -108,19 +108,19 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testChaining_on() {
-    SimpleEventEmitter<String> result = eventEmitter.on(e -> {});
+    var result = eventEmitter.on(e -> {});
     assertSame(eventEmitter, result);
   }
 
   @Test
   void testChaining_clear() {
-    SimpleEventEmitter<String> result = eventEmitter.clear();
+    var result = eventEmitter.clear();
     assertSame(eventEmitter, result);
   }
 
   @Test
   void testChaining_multipleCalls() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
     eventEmitter.on(e -> s.append("A")).on(e -> s.append("B")).clear().on(e -> s.append("C"));
 
@@ -131,7 +131,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testEmit_withNullValue() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
     eventEmitter.on(e -> s.append(e == null ? "NULL" : e));
 
@@ -142,7 +142,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testEmit_noArgOverload() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
 
     eventEmitter.on(() -> s.append("Called"));
 
@@ -161,7 +161,7 @@ public class SimpleEventEmitterTest {
 
   @Test
   void testAddSameListenerMultipleTimes() {
-    int[] counter = new int[] {0};
+    var counter = new int[] {0};
     SimpleEventEmitter.Listener<String> listener = e -> counter[0]++;
 
     eventEmitter.on(listener);

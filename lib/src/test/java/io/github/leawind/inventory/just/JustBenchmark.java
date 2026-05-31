@@ -26,15 +26,15 @@ import org.openjdk.jmh.infra.Blackhole;
 @Measurement(iterations = 3, time = 2)
 public class JustBenchmark {
   private final Random random = new Random(12138);
-
+  
   @Param({"16"})
   private int log2Size;
-
+  
   @Param({"0", "0.25", "0.5", "1.0"})
   private float errorRate;
-
+  
   private float[] array;
-
+  
   @Setup
   public void setup() {
     array = new float[1 << log2Size];
@@ -42,21 +42,21 @@ public class JustBenchmark {
       array[i] = random.nextFloat();
     }
   }
-
+  
   @Benchmark
   public void benchmarkJust(Blackhole bh) {
-    Summer summer = new Summer();
+    var summer = new Summer();
     justProcess(summer, array);
     bh.consume(summer);
   }
-
+  
   @Benchmark
   public void benchmarkTryCatch(Blackhole bh) {
-    Summer summer = new Summer();
+    var summer = new Summer();
     tryCatchProcess(summer, array);
     bh.consume(summer);
   }
-
+  
   Result<Float, Float> justProcess(float value) {
     if (value > errorRate) {
       return Result.ok(value);
@@ -64,27 +64,25 @@ public class JustBenchmark {
       return Result.err(value);
     }
   }
-
+  
   void justProcess(Summer summer, float[] array) {
     for (float v : array) {
-      Result<Float, Float> result = justProcess(v);
-      if (result instanceof Result.Ok) {
-        Result.Ok<Float, Float> ok = (Result.Ok<Float, Float>) result;
+      var result = justProcess(v);
+      if (result instanceof Result.Ok<Float, ?> ok) {
         summer.sum += ok.unwrap();
-      } else if (result instanceof Result.Err) {
-        Result.Err<Float, Float> err = (Result.Err<Float, Float>) result;
+      } else if (result instanceof Result.Err<?, Float> err) {
         summer.errors.add(err.unwrapErr());
       }
     }
   }
-
+  
   float tryCatchProcess(float value) throws CustomException {
     if (value > errorRate) {
       return value;
     }
     throw new CustomException(value);
   }
-
+  
   void tryCatchProcess(Summer summer, float[] array) {
     for (float v : array) {
       try {
@@ -94,32 +92,32 @@ public class JustBenchmark {
       }
     }
   }
-
+  
   static class CustomException extends Exception {
     float value;
-
+    
     CustomException(float value) {
       super();
       this.value = value;
     }
   }
-
+  
   static final class Summer {
     double sum = 0;
     List<Float> errors = new ArrayList<>();
   }
-
+  
   public static void main(String[] args) throws InterruptedException {
     int size = 22;
     for (int i = 0; i < 16; i++) {
-      JustBenchmark b1 = new JustBenchmark();
+      var b1 = new JustBenchmark();
       b1.log2Size = size;
       b1.errorRate = 0.5f;
       b1.setup();
       b1.justProcess(new Summer(), b1.array);
       Thread.sleep(500);
 
-      JustBenchmark b2 = new JustBenchmark();
+      var b2 = new JustBenchmark();
       b2.log2Size = size;
       b2.errorRate = 0.5f;
       b2.setup();

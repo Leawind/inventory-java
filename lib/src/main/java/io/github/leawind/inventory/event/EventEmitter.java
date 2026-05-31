@@ -1,9 +1,11 @@
 package io.github.leawind.inventory.event;
 
-import java.lang.constant.Constable;
+import io.github.leawind.inventory.type.UnsafeTypeUtils;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
@@ -13,6 +15,15 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>Listeners are executed in descending priority order. Listeners with the same key replace each
  * other. Keyless listeners accumulate.
+ *
+ * <p><strong>Memory management note:</strong> When a non-null key is provided, it is held via a
+ * {@link WeakReference}. This allows the key object to be garbage collected when no longer strongly
+ * reachable elsewhere. Once a key is collected, its associated subscription is automatically
+ * removed during the next {@link #emit()} call.
+ *
+ * <p><strong>Key equality:</strong> If using a custom map with reference-based equality (e.g.,
+ * Guava's {@code MapMaker().weakKeys()}), ensure that {@code on(key, ...)} and {@code off(key)} use
+ * the exact same key instance (reference equality {@code ==}).
  *
  * @param <E> The event type
  */
@@ -26,8 +37,48 @@ public class EventEmitter<E> {
    * Lookup map from key to subscription.
    *
    * <p>Keyless subscriptions ({@code null} key) are not included.
+   *
+   * <p>This map may be customized via constructor to support weak keys, concurrent access, etc.
    */
-  protected final Map<Constable, Subscription<E>> subscriptionsByKey = new HashMap<>();
+  protected final Map<Object, Subscription<E>> subscriptionsByKey;
+
+  /** Creates an EventEmitter with default HashMap for key-based lookup. */
+  public EventEmitter() {
+    this(new HashMap<>());
+  }
+
+  /**
+   * Creates an EventEmitter with a custom map for key-based subscription lookup.
+   *
+   * <p><strong>Requirements for the custom map:</strong>
+   *
+   * <ul>
+   *   <li>Must be empty upon construction
+   *   <li>Should support {@code null} keys only if you intend to use keyless listeners (though
+   *       keyless subscriptions are not stored in this map)
+   *   <li>Should be thread-safe if {@code EventEmitter} is accessed concurrently (this class itself
+   *       is not thread-safe)
+   *   <li>If using reference-based equality (e.g., Guava's {@code weakKeys()}), ensure {@code
+   *       on(key, ...)} and {@code off(key)} use the same key instance
+   * </ul>
+   *
+   * <p><strong>Example with Guava weak keys:</strong>
+   *
+   * <pre>{@code
+   * Map<Object, Subscription<?>> weakKeyMap = new MapMaker()
+   *     .weakKeys()
+   *     .makeMap();
+   * EventEmitter<MyEvent> emitter = new EventEmitter<>(weakKeyMap);
+   * }</pre>
+   *
+   * @param subscriptionsMap the map instance to use for key → subscription lookup
+   */
+  public EventEmitter(Map<Object, ?> subscriptionsMap) {
+    if (!subscriptionsMap.isEmpty()) {
+      throw new IllegalArgumentException("subscriptionsMap must be empty");
+    }
+    this.subscriptionsByKey = UnsafeTypeUtils.forceCast(subscriptionsMap);
+  }
 
   /**
    * Removes all subscribed listeners.
@@ -45,7 +96,7 @@ public class EventEmitter<E> {
    *
    * @param key the lookup key; always returns {@code false} if {@code null}
    */
-  public boolean hasKey(Constable key) {
+  public boolean hasKey(Object key) {
     return subscriptionsByKey.containsKey(key);
   }
 
@@ -54,8 +105,8 @@ public class EventEmitter<E> {
    *
    * @param key the lookup key
    */
-  public @Nullable Listener<E> getListener(Constable key) {
-    var subscription = subscriptionsByKey.get(key);
+  public @Nullable Listener<E> getListener(Object key) {
+    Subscription<E> subscription = subscriptionsByKey.get(key);
     if (subscription == null) {
       return null;
     }
@@ -98,7 +149,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.NoArg<E> listener) {
+  public EventEmitter<E> once(Object key, Listener.NoArg<E> listener) {
     return once(key, (Listener<E>) listener);
   }
 
@@ -108,7 +159,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.Basic<E> listener) {
+  public EventEmitter<E> once(Object key, Listener.Basic<E> listener) {
     return once(key, (Listener<E>) listener);
   }
 
@@ -118,7 +169,7 @@ public class EventEmitter<E> {
    *
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener<E> listener) {
+  public EventEmitter<E> once(Object key, Listener<E> listener) {
     return subscribe(new Subscription<>(key, listener, DEFAULT_PRIORITY, true));
   }
 
@@ -129,7 +180,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.NoArg<E> listener, int priority) {
+  public EventEmitter<E> once(Object key, Listener.NoArg<E> listener, int priority) {
     return once(key, (Listener<E>) listener, priority);
   }
 
@@ -140,7 +191,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener.Basic<E> listener, int priority) {
+  public EventEmitter<E> once(Object key, Listener.Basic<E> listener, int priority) {
     return once(key, (Listener<E>) listener, priority);
   }
 
@@ -151,7 +202,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> once(Constable key, Listener<E> listener, int priority) {
+  public EventEmitter<E> once(Object key, Listener<E> listener, int priority) {
     return subscribe(new Subscription<>(key, listener, priority, true));
   }
 
@@ -219,7 +270,7 @@ public class EventEmitter<E> {
    * @param key unique, non-null identifier for the listener
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.NoArg<E> listener) {
+  public EventEmitter<E> on(Object key, Listener.NoArg<E> listener) {
     return on(key, (Listener<E>) listener);
   }
 
@@ -230,7 +281,7 @@ public class EventEmitter<E> {
    * @param key unique, non-null identifier for the listener
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.Basic<E> listener) {
+  public EventEmitter<E> on(Object key, Listener.Basic<E> listener) {
     return on(key, (Listener<E>) listener);
   }
 
@@ -241,7 +292,7 @@ public class EventEmitter<E> {
    * @param key unique, non-null identifier for the listener
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener<E> listener) {
+  public EventEmitter<E> on(Object key, Listener<E> listener) {
     return on(key, listener, DEFAULT_PRIORITY);
   }
 
@@ -253,7 +304,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.NoArg<E> listener, int priority) {
+  public EventEmitter<E> on(Object key, Listener.NoArg<E> listener, int priority) {
     return on(key, (Listener<E>) listener, priority);
   }
 
@@ -265,7 +316,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener.Basic<E> listener, int priority) {
+  public EventEmitter<E> on(Object key, Listener.Basic<E> listener, int priority) {
     return on(key, (Listener<E>) listener, priority);
   }
 
@@ -277,7 +328,7 @@ public class EventEmitter<E> {
    * @param priority higher value executes first
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> on(Constable key, Listener<E> listener, int priority) {
+  public EventEmitter<E> on(Object key, Listener<E> listener, int priority) {
     if (key == null) {
       throw new IllegalArgumentException("Listener key must not be null.");
     }
@@ -285,16 +336,20 @@ public class EventEmitter<E> {
   }
 
   protected EventEmitter<E> subscribe(Subscription<E> subscription) {
+    // Clean up any dead-key subscriptions first
+    cleanupDeadKeySubscriptions();
+
     // If it has a key, replace the existing one with the same key
-    if (subscription.key != null) {
-      if (subscriptionsByKey.containsKey(subscription.key)) {
-        off(subscription.key);
+    Object key = subscription.getKey();
+    if (key != null) {
+      if (subscriptionsByKey.containsKey(key)) {
+        off(key);
       }
-      subscriptionsByKey.put(subscription.key, subscription);
+      subscriptionsByKey.put(key, subscription);
     }
 
     // Insert it at the correct position in the list
-    var it = subscriptions.listIterator();
+    ListIterator<Subscription<E>> it = subscriptions.listIterator();
     while (it.hasNext()) {
       if (it.next().priority < subscription.priority) {
         it.previous();
@@ -312,8 +367,8 @@ public class EventEmitter<E> {
    * @param key the key of the listener to remove
    * @return this emitter (for chaining)
    */
-  public EventEmitter<E> off(Constable key) {
-    var subscription = this.subscriptionsByKey.remove(key);
+  public EventEmitter<E> off(Object key) {
+    Subscription<E> subscription = this.subscriptionsByKey.remove(key);
     if (subscription != null) {
       subscriptions.remove(subscription);
     }
@@ -328,13 +383,14 @@ public class EventEmitter<E> {
    * @return this emitter (for chaining)
    */
   public EventEmitter<E> off(Listener<E> listener) {
-    var it = subscriptions.listIterator();
+    ListIterator<Subscription<E>> it = subscriptions.listIterator();
     while (it.hasNext()) {
-      var subscription = it.next();
+      Subscription<E> subscription = it.next();
       if (subscription.listener == listener) {
         it.remove();
-        if (subscription.key != null) {
-          subscriptionsByKey.remove(subscription.key);
+        Object key = subscription.getKey();
+        if (key != null) {
+          subscriptionsByKey.remove(key);
         }
         break;
       }
@@ -352,14 +408,26 @@ public class EventEmitter<E> {
    * removal (via {@link EventControl#unsubscribe()}) are removed after execution. Propagation stops
    * if {@link EventControl#stop()} is called.
    *
+   * <p>Subscriptions whose weak key has been garbage collected are automatically removed before
+   * dispatch begins.
+   *
    * @param event the event payload; may be {@code null}
    */
   public void emit(@Nullable E event) {
-    var it = subscriptions.listIterator();
-    var control = new EventControl();
+    // Clean up subscriptions with collected keys before dispatch
+    cleanupDeadKeySubscriptions();
+
+    ListIterator<Subscription<E>> it = subscriptions.listIterator();
+    EventControl control = new EventControl();
 
     while (it.hasNext()) {
-      var subscription = it.next();
+      Subscription<E> subscription = it.next();
+
+      // Skip if key was collected between cleanup and now (defensive)
+      if (subscription.keyRef != null && subscription.getKey() == null) {
+        it.remove();
+        continue;
+      }
 
       control.reset();
 
@@ -376,6 +444,16 @@ public class EventEmitter<E> {
         break;
       }
     }
+  }
+
+  private void cleanupDeadKeySubscriptions() {
+    // Remove from list
+    subscriptions.removeIf(sub -> sub.keyRef != null && sub.getKey() == null);
+
+    // Remove from map (entries with collected keys)
+    subscriptionsByKey
+        .entrySet()
+        .removeIf(entry -> entry.getValue().keyRef != null && entry.getValue().getKey() == null);
   }
 
   /** Sugar method for listener declaration */
@@ -449,6 +527,30 @@ public class EventEmitter<E> {
     }
   }
 
-  protected record Subscription<E>(
-      @Nullable Constable key, Listener<E> listener, int priority, boolean once) {}
+  protected static final class Subscription<E> {
+    /**
+     * Weak reference to the key, or null for keyless subscriptions. The key itself is not strongly
+     * held by the Subscription.
+     */
+    @Nullable final WeakReference<Object> keyRef;
+
+    final Listener<E> listener;
+    final int priority;
+    final boolean once;
+
+    /**
+     * @param key the key object; if non-null, will be held weakly
+     */
+    Subscription(@Nullable Object key, Listener<E> listener, int priority, boolean once) {
+      this.keyRef = (key == null) ? null : new WeakReference<>(key);
+      this.listener = listener;
+      this.priority = priority;
+      this.once = once;
+    }
+
+    /** Returns the key if still reachable, or null if collected / keyless. */
+    @Nullable Object getKey() {
+      return keyRef == null ? null : keyRef.get();
+    }
+  }
 }

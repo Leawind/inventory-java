@@ -1,11 +1,12 @@
 package io.github.leawind.inventory.event;
 
 import io.github.leawind.inventory.type.UnsafeTypeUtils;
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.Iterator;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
@@ -28,21 +29,18 @@ import org.jspecify.annotations.Nullable;
  * @param <E> The event type
  */
 public class EventEmitter<E> {
-  protected static final int DEFAULT_PRIORITY = 0;
+  private static final int DEFAULT_PRIORITY = 0;
 
-  /** Sorted by priority in descending order */
-  protected final List<Subscription<E>> subscriptions = new ArrayList<>();
+  private final EventControl control = new EventControl();
 
-  /**
-   * Lookup map from key to subscription.
-   *
-   * <p>Keyless subscriptions ({@code null} key) are not included.
-   *
-   * <p>This map may be customized via constructor to support weak keys, concurrent access, etc.
-   */
-  protected final Map<Object, Subscription<E>> subscriptionsByKey;
+  private Entry<E>[] snapshot = createEmptyArray();
 
-  /** Creates an EventEmitter with default HashMap for key-based lookup. */
+  private boolean dirty = false;
+
+  private final Map<Object, Entry<E>> byKey;
+
+  private final ReferenceQueue<Object> refQueue = new ReferenceQueue<>();
+
   public EventEmitter() {
     this(new HashMap<>());
   }
@@ -62,340 +60,13 @@ public class EventEmitter<E> {
    *       on(key, ...)} and {@code off(key)} use the same key instance
    * </ul>
    *
-   * <p><strong>Example with Guava weak keys:</strong>
-   *
-   * <pre>{@code
-   * Map<Object, Subscription<?>> weakKeyMap = new MapMaker()
-   *     .weakKeys()
-   *     .makeMap();
-   * EventEmitter<MyEvent> emitter = new EventEmitter<>(weakKeyMap);
-   * }</pre>
-   *
-   * @param subscriptionsMap the map instance to use for key → subscription lookup
+   * @param map the map instance to use for key → entry lookup
    */
-  public EventEmitter(Map<Object, ?> subscriptionsMap) {
-    if (!subscriptionsMap.isEmpty()) {
-      throw new IllegalArgumentException("subscriptionsMap must be empty");
+  public EventEmitter(Map<Object, ?> map) {
+    if (!map.isEmpty()) {
+      throw new IllegalArgumentException("map must be empty");
     }
-    this.subscriptionsByKey = UnsafeTypeUtils.forceCast(subscriptionsMap);
-  }
-
-  /**
-   * Removes all subscribed listeners.
-   *
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> clear() {
-    subscriptions.clear();
-    subscriptionsByKey.clear();
-    return this;
-  }
-
-  /**
-   * Returns whether a listener with the given key exists.
-   *
-   * @param key the lookup key; always returns {@code false} if {@code null}
-   */
-  public boolean hasKey(Object key) {
-    return subscriptionsByKey.containsKey(key);
-  }
-
-  /**
-   * Returns the listener associated with the given key, or {@code null} if not found.
-   *
-   * @param key the lookup key
-   */
-  public @Nullable Listener<E> getListener(Object key) {
-    Subscription<E> subscription = subscriptionsByKey.get(key);
-    if (subscription == null) {
-      return null;
-    }
-    return subscription.listener;
-  }
-
-  /**
-   * Adds a one-time keyless listener with default priority. The listener is automatically removed
-   * after its first invocation.
-   *
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> once(Listener.NoArg<E> listener) {
-    return once((Listener<E>) listener);
-  }
-
-  /**
-   * Adds a one-time keyless listener with default priority. The listener is automatically removed
-   * after its first invocation.
-   *
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> once(Listener.Basic<E> listener) {
-    return once((Listener<E>) listener);
-  }
-
-  /**
-   * Adds a one-time keyless listener with default priority. The listener is automatically removed
-   * after its first invocation.
-   *
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> once(Listener<E> listener) {
-    return subscribe(new Subscription<>(null, listener, DEFAULT_PRIORITY, true));
-  }
-
-  /**
-   * Sets a one-time listener identified by {@code key} with default priority. Replaces any existing
-   * listener with the same key.
-   *
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> once(Object key, Listener.NoArg<E> listener) {
-    return once(key, (Listener<E>) listener);
-  }
-
-  /**
-   * Sets a one-time listener identified by {@code key} with default priority. Replaces any existing
-   * listener with the same key.
-   *
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> once(Object key, Listener.Basic<E> listener) {
-    return once(key, (Listener<E>) listener);
-  }
-
-  /**
-   * Sets a one-time listener identified by {@code key} with default priority. Replaces any existing
-   * listener with the same key.
-   *
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> once(Object key, Listener<E> listener) {
-    return subscribe(new Subscription<>(key, listener, DEFAULT_PRIORITY, true));
-  }
-
-  /**
-   * Sets a one-time listener identified by {@code key} with the given priority. Replaces any
-   * existing listener with the same key.
-   *
-   * @param priority higher value executes first
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> once(Object key, Listener.NoArg<E> listener, int priority) {
-    return once(key, (Listener<E>) listener, priority);
-  }
-
-  /**
-   * Sets a one-time listener identified by {@code key} with the given priority. Replaces any
-   * existing listener with the same key.
-   *
-   * @param priority higher value executes first
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> once(Object key, Listener.Basic<E> listener, int priority) {
-    return once(key, (Listener<E>) listener, priority);
-  }
-
-  /**
-   * Sets a one-time listener identified by {@code key} with the given priority. Replaces any
-   * existing listener with the same key.
-   *
-   * @param priority higher value executes first
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> once(Object key, Listener<E> listener, int priority) {
-    return subscribe(new Subscription<>(key, listener, priority, true));
-  }
-
-  /**
-   * Adds a persistent keyless listener with default priority.
-   *
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> on(Listener.NoArg<E> listener) {
-    return on((Listener<E>) listener);
-  }
-
-  /**
-   * Adds a persistent keyless listener with default priority.
-   *
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> on(Listener.Basic<E> listener) {
-    return on((Listener<E>) listener);
-  }
-
-  /**
-   * Adds a persistent keyless listener with default priority.
-   *
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> on(Listener<E> listener) {
-    return on(listener, DEFAULT_PRIORITY);
-  }
-
-  /**
-   * Adds a persistent keyless listener with the given priority.
-   *
-   * @param priority higher value executes first
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> on(Listener.NoArg<E> listener, int priority) {
-    return on((Listener<E>) listener, priority);
-  }
-
-  /**
-   * Adds a persistent keyless listener with the given priority.
-   *
-   * @param priority higher value executes first
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> on(Listener.Basic<E> listener, int priority) {
-    return on((Listener<E>) listener, priority);
-  }
-
-  /**
-   * Adds a persistent keyless listener with the given priority.
-   *
-   * @param priority higher value executes first
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> on(Listener<E> listener, int priority) {
-    return subscribe(new Subscription<>(null, listener, priority, false));
-  }
-
-  /**
-   * Sets a persistent listener identified by {@code key} with default priority. Replaces any
-   * existing listener with the same key.
-   *
-   * @param key unique, non-null identifier for the listener
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> on(Object key, Listener.NoArg<E> listener) {
-    return on(key, (Listener<E>) listener);
-  }
-
-  /**
-   * Sets a persistent listener identified by {@code key} with default priority. Replaces any
-   * existing listener with the same key.
-   *
-   * @param key unique, non-null identifier for the listener
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> on(Object key, Listener.Basic<E> listener) {
-    return on(key, (Listener<E>) listener);
-  }
-
-  /**
-   * Sets a persistent listener identified by {@code key} with default priority. Replaces any
-   * existing listener with the same key.
-   *
-   * @param key unique, non-null identifier for the listener
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> on(Object key, Listener<E> listener) {
-    return on(key, listener, DEFAULT_PRIORITY);
-  }
-
-  /**
-   * Sets a persistent listener identified by {@code key} with the given priority. Replaces any
-   * existing listener with the same key.
-   *
-   * @param key unique, non-null identifier for the listener
-   * @param priority higher value executes first
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> on(Object key, Listener.NoArg<E> listener, int priority) {
-    return on(key, (Listener<E>) listener, priority);
-  }
-
-  /**
-   * Sets a persistent listener identified by {@code key} with the given priority. Replaces any
-   * existing listener with the same key.
-   *
-   * @param key unique, non-null identifier for the listener
-   * @param priority higher value executes first
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> on(Object key, Listener.Basic<E> listener, int priority) {
-    return on(key, (Listener<E>) listener, priority);
-  }
-
-  /**
-   * Sets a persistent listener identified by {@code key} with the given priority. Replaces any
-   * existing listener with the same key.
-   *
-   * @param key unique, non-null identifier for the listener
-   * @param priority higher value executes first
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> on(Object key, Listener<E> listener, int priority) {
-    if (key == null) {
-      throw new IllegalArgumentException("Listener key must not be null.");
-    }
-    return subscribe(new Subscription<>(key, listener, priority, false));
-  }
-
-  protected EventEmitter<E> subscribe(Subscription<E> subscription) {
-    // Clean up any dead-key subscriptions first
-    cleanupDeadKeySubscriptions();
-
-    // If it has a key, replace the existing one with the same key
-    Object key = subscription.getKey();
-    if (key != null) {
-      if (subscriptionsByKey.containsKey(key)) {
-        off(key);
-      }
-      subscriptionsByKey.put(key, subscription);
-    }
-
-    // Insert it at the correct position in the list
-    ListIterator<Subscription<E>> it = subscriptions.listIterator();
-    while (it.hasNext()) {
-      if (it.next().priority < subscription.priority) {
-        it.previous();
-        break;
-      }
-    }
-    it.add(subscription);
-
-    return this;
-  }
-
-  /**
-   * Removes the listener associated with the given key. Does nothing if the key is not found.
-   *
-   * @param key the key of the listener to remove
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> off(Object key) {
-    Subscription<E> subscription = this.subscriptionsByKey.remove(key);
-    if (subscription != null) {
-      subscriptions.remove(subscription);
-    }
-    return this;
-  }
-
-  /**
-   * Removes the first (highest-priority) occurrence of the given listener instance. Does nothing if
-   * the listener is not subscribed.
-   *
-   * @param listener the listener to remove
-   * @return this emitter (for chaining)
-   */
-  public EventEmitter<E> off(Listener<E> listener) {
-    ListIterator<Subscription<E>> it = subscriptions.listIterator();
-    while (it.hasNext()) {
-      Subscription<E> subscription = it.next();
-      if (subscription.listener == listener) {
-        it.remove();
-        Object key = subscription.getKey();
-        if (key != null) {
-          subscriptionsByKey.remove(key);
-        }
-        break;
-      }
-    }
-    return this;
+    this.byKey = UnsafeTypeUtils.forceCast(map);
   }
 
   /** Emits an event with a {@code null} payload. */
@@ -413,52 +84,375 @@ public class EventEmitter<E> {
    *
    * @param event the event payload; may be {@code null}
    */
+  @SuppressWarnings("unchecked")
   public void emit(@Nullable E event) {
-    // Clean up subscriptions with collected keys before dispatch
-    cleanupDeadKeySubscriptions();
+    {
+      Object polled;
+      while ((polled = refQueue.poll()) != null) {
+        ((Entry<E>) polled).markRemoved();
+        this.dirty = true;
+      }
+    }
 
-    ListIterator<Subscription<E>> it = subscriptions.listIterator();
-    EventControl control = new EventControl();
+    if (this.dirty) {
+      rebuildSnapshot();
+    }
 
-    while (it.hasNext()) {
-      Subscription<E> subscription = it.next();
-
-      // Skip if key was collected between cleanup and now (defensive)
-      if (subscription.keyRef != null && subscription.getKey() == null) {
-        it.remove();
+    boolean needsRebuild = false;
+    Entry<E>[] currentSnapshot = this.snapshot;
+    for (int i = 0, len = currentSnapshot.length; i < len; i++) {
+      Entry<E> entry = currentSnapshot[i];
+      if (entry.isRemoved()) {
         continue;
       }
 
-      control.reset();
+      this.control.reset();
+      Subscription<E> sub = entry.subscription();
 
-      if (subscription.once) {
-        control.unsubscribe();
+      if (sub.once) {
+        entry.markRemoved();
+        needsRebuild = true;
       }
 
-      subscription.listener.on(event, control);
+      sub.listener.on(event, this.control);
 
-      if (control.markedForRemoval) {
-        it.remove();
+      if (this.control.markedForRemoval) {
+        entry.markRemoved();
+        needsRebuild = true;
       }
-      if (control.shouldStop) {
+      if (this.control.shouldStop) {
         break;
       }
     }
+
+    if (needsRebuild) {
+      rebuildSnapshot();
+    }
   }
 
-  private void cleanupDeadKeySubscriptions() {
-    // Remove from list
-    subscriptions.removeIf(sub -> sub.keyRef != null && sub.getKey() == null);
+  // region on
 
-    // Remove from map (entries with collected keys)
-    subscriptionsByKey
-        .entrySet()
-        .removeIf(entry -> entry.getValue().keyRef != null && entry.getValue().getKey() == null);
+  public EventEmitter<E> on(Listener.NoArg<E> listener) {
+    return on((Listener<E>) listener);
+  }
+
+  public EventEmitter<E> on(Listener.Basic<E> listener) {
+    return on((Listener<E>) listener);
+  }
+
+  public EventEmitter<E> on(Listener<E> listener) {
+    return on(listener, DEFAULT_PRIORITY);
+  }
+
+  public EventEmitter<E> on(Listener.NoArg<E> listener, int priority) {
+    return on((Listener<E>) listener, priority);
+  }
+
+  public EventEmitter<E> on(Listener.Basic<E> listener, int priority) {
+    return on((Listener<E>) listener, priority);
+  }
+
+  public EventEmitter<E> on(Listener<E> listener, int priority) {
+    return subscribe(null, priority, listener, false);
+  }
+
+  public EventEmitter<E> on(Object key, Listener.NoArg<E> listener) {
+    return on(key, (Listener<E>) listener);
+  }
+
+  public EventEmitter<E> on(Object key, Listener.Basic<E> listener) {
+    return on(key, (Listener<E>) listener);
+  }
+
+  public EventEmitter<E> on(Object key, Listener<E> listener) {
+    return on(key, listener, DEFAULT_PRIORITY);
+  }
+
+  public EventEmitter<E> on(Object key, Listener.NoArg<E> listener, int priority) {
+    return on(key, (Listener<E>) listener, priority);
+  }
+
+  public EventEmitter<E> on(Object key, Listener.Basic<E> listener, int priority) {
+    return on(key, (Listener<E>) listener, priority);
+  }
+
+  /**
+   * Sets a persistent listener identified by {@code key} with the given priority. Replaces any
+   * existing listener with the same key.
+   *
+   * @param key unique, non-null identifier for the listener
+   * @param priority higher value executes first
+   * @return this emitter (for chaining)
+   */
+  public EventEmitter<E> on(Object key, Listener<E> listener, int priority) {
+    if (key == null) {
+      throw new IllegalArgumentException("Listener key must not be null.");
+    }
+    return subscribe(key, priority, listener, false);
+  }
+
+  // endregion
+
+  // region once
+
+  public EventEmitter<E> once(Listener.NoArg<E> listener) {
+    return once((Listener<E>) listener);
+  }
+
+  public EventEmitter<E> once(Listener.Basic<E> listener) {
+    return once((Listener<E>) listener);
+  }
+
+  public EventEmitter<E> once(Listener<E> listener) {
+    return subscribe(null, DEFAULT_PRIORITY, listener, true);
+  }
+
+  public EventEmitter<E> once(Object key, Listener.NoArg<E> listener) {
+    return once(key, (Listener<E>) listener);
+  }
+
+  public EventEmitter<E> once(Object key, Listener.Basic<E> listener) {
+    return once(key, (Listener<E>) listener);
+  }
+
+  public EventEmitter<E> once(Object key, Listener<E> listener) {
+    return once(key, listener, DEFAULT_PRIORITY);
+  }
+
+  public EventEmitter<E> once(Object key, Listener.NoArg<E> listener, int priority) {
+    return once(key, (Listener<E>) listener, priority);
+  }
+
+  public EventEmitter<E> once(Object key, Listener.Basic<E> listener, int priority) {
+    return once(key, (Listener<E>) listener, priority);
+  }
+
+  /**
+   * Sets a one-time listener identified by {@code key} with the given priority. Replaces any
+   * existing listener with the same key.
+   *
+   * @param priority higher value executes first
+   * @return this emitter (for chaining)
+   */
+  public EventEmitter<E> once(Object key, Listener<E> listener, int priority) {
+    return subscribe(key, priority, listener, true);
+  }
+
+  // endregion
+
+  private EventEmitter<E> subscribe(
+      @Nullable Object key, int priority, Listener<E> listener, boolean once) {
+    if (key != null) {
+      Entry<E> old = byKey.remove(key);
+      if (old != null) {
+        old.markRemoved();
+      }
+    }
+
+    Subscription<E> sub = new Subscription<>(listener, once);
+    Entry<E> entry;
+    if (key != null) {
+      entry = new KeyedEntry<>(key, priority, sub, refQueue);
+      byKey.put(key, entry);
+    } else {
+      entry = new KeylessEntry<>(priority, sub);
+    }
+
+    snapshot = appendEntry(snapshot, entry);
+    dirty = true;
+    return this;
+  }
+
+  /**
+   * Removes the listener associated with the given key. Does nothing if the key is not found.
+   *
+   * @param key the key of the listener to remove
+   * @return this emitter (for chaining)
+   */
+  public EventEmitter<E> off(Object key) {
+    Entry<E> entry = byKey.remove(key);
+    if (entry != null) {
+      entry.markRemoved();
+      dirty = true;
+    }
+    return this;
+  }
+
+  /**
+   * Removes the first (highest-priority) occurrence of the given listener instance. Does nothing if
+   * the listener is not subscribed.
+   *
+   * @param listener the listener to remove
+   * @return this emitter (for chaining)
+   */
+  public EventEmitter<E> off(Listener<E> listener) {
+    Entry<E>[] currentSnapshot = this.snapshot;
+    for (int i = 0, len = currentSnapshot.length; i < len; i++) {
+      Entry<E> entry = currentSnapshot[i];
+      if (!entry.isRemoved() && entry.subscription().listener == listener) {
+        entry.markRemoved();
+        dirty = true;
+        break;
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Removes all subscribed listeners.
+   *
+   * @return this emitter (for chaining)
+   */
+  public EventEmitter<E> clear() {
+    snapshot = createEmptyArray();
+    byKey.clear();
+    dirty = false;
+    return this;
+  }
+
+  /**
+   * Returns whether a listener with the given key exists.
+   *
+   * @param key the lookup key; always returns {@code false} if {@code null}
+   */
+  public boolean hasKey(Object key) {
+    Entry<E> entry = byKey.get(key);
+    return entry != null && !entry.isRemoved();
+  }
+
+  /**
+   * Returns the listener associated with the given key, or {@code null} if not found.
+   *
+   * @param key the lookup key
+   */
+  public @Nullable Listener<E> getListener(Object key) {
+    Entry<E> entry = byKey.get(key);
+    if (entry == null || entry.isRemoved()) {
+      return null;
+    }
+    return entry.subscription().listener;
   }
 
   /** Sugar method for listener declaration */
   public Listener<E> listener(Listener.Basic<E> listener) {
     return listener;
+  }
+
+  @SuppressWarnings("unchecked")
+  private Entry<E>[] appendEntry(Entry<E>[] old, Entry<E> newEntry) {
+    Entry<E>[] result = Arrays.copyOf(old, old.length + 1);
+    result[old.length] = newEntry;
+    return result;
+  }
+
+  @SuppressWarnings("unchecked")
+  private void rebuildSnapshot() {
+    Entry<E>[] oldSnapshot = this.snapshot;
+    ArrayList<Entry<E>> valid = new ArrayList<>(oldSnapshot.length);
+    for (int i = 0, len = oldSnapshot.length; i < len; i++) {
+      Entry<E> entry = oldSnapshot[i];
+      if (!entry.isRemoved()) {
+        valid.add(entry);
+      }
+    }
+    valid.sort((a, b) -> Integer.compare(b.priority(), a.priority()));
+    this.snapshot = valid.toArray(createEmptyArray());
+    this.dirty = false;
+
+    Iterator<Map.Entry<Object, Entry<E>>> it = byKey.entrySet().iterator();
+    while (it.hasNext()) {
+      if (it.next().getValue().isRemoved()) {
+        it.remove();
+      }
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <E> Entry<E>[] createEmptyArray() {
+    return new Entry[0];
+  }
+
+  private interface Entry<E> {
+    int priority();
+
+    Subscription<E> subscription();
+
+    boolean isRemoved();
+
+    void markRemoved();
+  }
+
+  private static final class KeyedEntry<E> extends WeakReference<Object> implements Entry<E> {
+    private final int priority;
+    private final Subscription<E> subscription;
+    private boolean removed;
+
+    KeyedEntry(Object key, int priority, Subscription<E> sub, ReferenceQueue<Object> queue) {
+      super(key, queue);
+      this.priority = priority;
+      this.subscription = sub;
+    }
+
+    @Override
+    public int priority() {
+      return priority;
+    }
+
+    @Override
+    public Subscription<E> subscription() {
+      return subscription;
+    }
+
+    @Override
+    public boolean isRemoved() {
+      return removed;
+    }
+
+    @Override
+    public void markRemoved() {
+      removed = true;
+    }
+  }
+
+  private static final class KeylessEntry<E> implements Entry<E> {
+    private final int priority;
+    private final Subscription<E> subscription;
+    private boolean removed;
+
+    KeylessEntry(int priority, Subscription<E> sub) {
+      this.priority = priority;
+      this.subscription = sub;
+    }
+
+    @Override
+    public int priority() {
+      return priority;
+    }
+
+    @Override
+    public Subscription<E> subscription() {
+      return subscription;
+    }
+
+    @Override
+    public boolean isRemoved() {
+      return removed;
+    }
+
+    @Override
+    public void markRemoved() {
+      removed = true;
+    }
+  }
+
+  protected static final class Subscription<E> {
+    final Listener<E> listener;
+    final boolean once;
+
+    Subscription(Listener<E> listener, boolean once) {
+      this.listener = listener;
+      this.once = once;
+    }
   }
 
   /**
@@ -524,33 +518,6 @@ public class EventEmitter<E> {
     protected void reset() {
       shouldStop = false;
       markedForRemoval = false;
-    }
-  }
-
-  protected static final class Subscription<E> {
-    /**
-     * Weak reference to the key, or null for keyless subscriptions. The key itself is not strongly
-     * held by the Subscription.
-     */
-    @Nullable final WeakReference<Object> keyRef;
-
-    final Listener<E> listener;
-    final int priority;
-    final boolean once;
-
-    /**
-     * @param key the key object; if non-null, will be held weakly
-     */
-    Subscription(@Nullable Object key, Listener<E> listener, int priority, boolean once) {
-      this.keyRef = (key == null) ? null : new WeakReference<>(key);
-      this.listener = listener;
-      this.priority = priority;
-      this.once = once;
-    }
-
-    /** Returns the key if still reachable, or null if collected / keyless. */
-    @Nullable Object getKey() {
-      return keyRef == null ? null : keyRef.get();
     }
   }
 }

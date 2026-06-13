@@ -108,29 +108,6 @@ public class SimpleEventEmitterTest {
   }
 
   @Test
-  void testChaining_on() {
-    var result = eventEmitter.on(e -> {});
-    assertSame(eventEmitter, result);
-  }
-
-  @Test
-  void testChaining_clear() {
-    var result = eventEmitter.clear();
-    assertSame(eventEmitter, result);
-  }
-
-  @Test
-  void testChaining_multipleCalls() {
-    var s = new StringBuilder();
-
-    eventEmitter.on(e -> s.append("A")).on(e -> s.append("B")).clear().on(e -> s.append("C"));
-
-    eventEmitter.emit("test");
-
-    assertEquals("C", s.toString());
-  }
-
-  @Test
   void testEmit_withNullValue() {
     var s = new StringBuilder();
 

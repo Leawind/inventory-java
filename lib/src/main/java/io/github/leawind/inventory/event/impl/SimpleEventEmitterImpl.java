@@ -18,21 +18,18 @@ public class SimpleEventEmitterImpl<E> implements SimpleEventEmitter.Owned<E> {
   }
 
   @Override
-  public SimpleEventEmitter<E> clear() {
+  public void clear() {
     listeners.clear();
-    return this;
   }
 
   @Override
-  public SimpleEventEmitter<E> on(Listener<E> listener) {
+  public void on(Listener<E> listener) {
     listeners.add(listener);
-    return this;
   }
 
   @Override
-  public SimpleEventEmitter<E> on(Listener.NoArg<E> listener) {
+  public void on(Listener.NoArg<E> listener) {
     listeners.add(listener);
-    return this;
   }
 
   @Override

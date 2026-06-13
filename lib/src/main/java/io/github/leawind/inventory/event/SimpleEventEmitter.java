@@ -12,13 +12,14 @@ public interface SimpleEventEmitter<E> {
     return new SimpleEventEmitterImpl<>(listeners);
   }
 
-  void clear();
-
   void on(Listener<E> listener);
 
   void on(Listener.NoArg<E> listener);
 
   interface Owned<E> extends SimpleEventEmitter<E> {
+
+    void clear();
+
     void emit();
 
     void emit(E event);

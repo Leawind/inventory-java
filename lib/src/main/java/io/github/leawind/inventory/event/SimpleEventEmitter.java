@@ -1,46 +1,31 @@
 package io.github.leawind.inventory.event;
 
-import java.util.ArrayList;
+import io.github.leawind.inventory.event.impl.SimpleEventEmitterImpl;
 import java.util.Collection;
-import org.jspecify.annotations.Nullable;
 
-public class SimpleEventEmitter<E> {
-
-  private final Collection<Listener<E>> listeners;
-
-  public SimpleEventEmitter() {
-    this.listeners = new ArrayList<>();
+public interface SimpleEventEmitter<E> {
+  static <E> Owner<E> create() {
+    return new SimpleEventEmitterImpl<>();
   }
 
-  public SimpleEventEmitter(Collection<Listener<E>> listeners) {
-    this.listeners = listeners;
+  static <E> Owner<E> create(Collection<Listener<E>> listeners) {
+    return new SimpleEventEmitterImpl<>(listeners);
   }
 
-  public SimpleEventEmitter<E> clear() {
-    listeners.clear();
-    return this;
+  SimpleEventEmitter<E> clear();
+
+  SimpleEventEmitter<E> on(Listener<E> listener);
+
+  SimpleEventEmitter<E> on(Listener.NoArg<E> listener);
+
+  interface Owner<E> extends SimpleEventEmitter<E> {
+    void emit();
+
+    void emit(E event);
   }
 
-  public SimpleEventEmitter<E> on(Listener<E> listener) {
-    listeners.add(listener);
-    return this;
-  }
-
-  public SimpleEventEmitter<E> on(Listener.NoArg<E> listener) {
-    listeners.add(listener);
-    return this;
-  }
-
-  public void emit() {
-    emit(null);
-  }
-
-  public void emit(@Nullable E event) {
-    listeners.forEach(listener -> listener.on(event));
-  }
-
-  public interface Listener<E> {
-    void on(E event);
+  interface Listener<E2> {
+    void on(E2 event);
 
     interface NoArg<E> extends Listener<E> {
       void on();

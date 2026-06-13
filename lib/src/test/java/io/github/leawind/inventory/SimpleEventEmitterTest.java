@@ -1,18 +1,19 @@
-package io.github.leawind.inventory.event;
+package io.github.leawind.inventory;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.github.leawind.inventory.event.SimpleEventEmitter;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class SimpleEventEmitterTest {
-  private SimpleEventEmitter<String> eventEmitter;
+  private SimpleEventEmitter.Owner<String> eventEmitter;
 
   @BeforeEach
   void setUp() {
-    eventEmitter = new SimpleEventEmitter<>();
+    eventEmitter = SimpleEventEmitter.create();
   }
 
   @Test
@@ -100,7 +101,7 @@ public class SimpleEventEmitterTest {
     listeners.add(e -> s.append("1"));
     listeners.add(e -> s.append("2"));
 
-    var customEmitter = new SimpleEventEmitter<>(listeners);
+    var customEmitter = SimpleEventEmitter.create(listeners);
     customEmitter.emit("test");
 
     assertEquals("12", s.toString());

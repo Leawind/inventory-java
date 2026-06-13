@@ -90,7 +90,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testGetListener_shouldReturnCorrectListener() {
-    SingleEventEmitter.Listener<String> listener = (e) -> {};
+    Listener<String> listener = (e) -> {};
 
     eventEmitter.on(listener);
 
@@ -99,7 +99,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testGetListener_afterClear_shouldReturnNull() {
-    SingleEventEmitter.Listener<String> listener = (e) -> {};
+    Listener<String> listener = (e) -> {};
 
     eventEmitter.on(listener);
     eventEmitter.clear();
@@ -109,7 +109,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testGetListener_afterOff_shouldReturnNull() {
-    SingleEventEmitter.Listener<String> listener = (e) -> {};
+    Listener<String> listener = (e) -> {};
 
     eventEmitter.on(listener);
     eventEmitter.off();
@@ -119,7 +119,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testGetListener_afterOnceAutoRemove_shouldReturnNull() {
-    SingleEventEmitter.Listener<String> listener = (e) -> {};
+    Listener<String> listener = (e) -> {};
 
     eventEmitter.once(listener);
     eventEmitter.emit("test");
@@ -229,7 +229,7 @@ public class SingleEventEmitterTest {
 
   @Test
   void testListenerHelper_method() {
-    SingleEventEmitter.Listener<String> listener = eventEmitter.listener(() -> {});
+    Listener<String> listener = eventEmitter.listener(() -> {});
 
     assertNotNull(listener);
   }

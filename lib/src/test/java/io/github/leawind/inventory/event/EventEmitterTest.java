@@ -2,267 +2,406 @@ package io.github.leawind.inventory.event;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
-public class EventEmitterTest {
-  private EventEmitter<Object> eventEmitter;
-
-  @BeforeEach
-  void setUp() {
-    eventEmitter = new EventEmitter<>();
-  }
-
-  // region Core Functional Tests
+class EventEmitterTest {
 
   @Test
-  void testOnce() {
-    StringBuilder s = new StringBuilder();
-
-    eventEmitter
-        .on(e -> s.append("A"))
-        .once(() -> s.append("B"))
-        .once(e -> s.append("C"))
-        .once("a key", e -> s.append("D"))
-        .once("a key", e -> s.append("E"));
-
-    eventEmitter.emit(null);
-    eventEmitter.emit(null);
-
-    assertEquals("ABCEA", s.toString());
+  void shouldCreateInstanceViaFactory() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    assertNotNull(emitter);
   }
 
   @Test
-  void testPriority() {
-    StringBuilder s = new StringBuilder();
+  void shouldDispatchEventToRegisteredListeners() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
 
-    eventEmitter
-        .on(e -> s.append('A'), 1)
-        .on(() -> s.append('B'), 2)
-        .on(e -> s.append('C'), 2)
-        .on(() -> s.append('D'), 1);
+    emitter.register("A", (event, ctrl) -> received.add("A:" + event));
+    emitter.register("B", (event, ctrl) -> received.add("B:" + event));
 
-    eventEmitter.emit(null);
-    assertEquals("BCAD", s.toString());
+    emitter.emit("hello");
+
+    assertEquals(List.of("A:hello", "B:hello"), received);
   }
 
   @Test
-  void testOff() {
-    StringBuilder s = new StringBuilder();
+  void shouldDispatchInDependencyOrder() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> order = new ArrayList<>();
 
-    EventEmitter.Listener<Object> listenerA = eventEmitter.listener(e -> s.append("A"));
-    EventEmitter.Listener<Object> listenerB = eventEmitter.listener(e -> s.append("B"));
+    emitter.withDependencies().after("B").register("A", (e, c) -> order.add("A"));
+    emitter.register("B", (e, c) -> order.add("B"));
+    emitter.withDependencies().after("A").register("C", (e, c) -> order.add("C"));
 
-    eventEmitter.on(listenerA);
-    eventEmitter.on(listenerB, 4);
+    emitter.emit("x");
 
-    eventEmitter.on("alice", e -> s.append("C"));
-    eventEmitter.on("bob", e -> s.append("D"));
-    eventEmitter.on("alice", e -> s.append("E"));
-
-    eventEmitter.emit(null);
-    assertEquals("BADE", s.toString());
-
-    s.delete(0, s.length());
-
-    eventEmitter.off(listenerA);
-    eventEmitter.off("bob");
-
-    eventEmitter.emit(null);
-    assertEquals("BE", s.toString());
+    assertEquals(List.of("B", "A", "C"), order);
   }
 
   @Test
-  void testStopPropagation() {
-    StringBuilder s = new StringBuilder();
+  void shouldStopPropagationWhenControlStopCalled() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
 
-    eventEmitter
-        .on(
-            (e, ctrl) -> {
-              s.append("A");
-              ctrl.stop();
-            })
-        .on(e -> s.append("B"));
+    emitter.register(
+        "A",
+        (event, ctrl) -> {
+          received.add("A");
+          ctrl.stop();
+        });
+    emitter.register("B", (event, ctrl) -> received.add("B"));
 
-    eventEmitter.emit(null);
-    assertEquals("A", s.toString());
+    emitter.emit("x");
+
+    assertEquals(List.of("A"), received);
   }
 
   @Test
-  void testRemoveSelf() {
-    StringBuilder s = new StringBuilder();
+  void shouldUnregisterListenerWhenControlUnregisterCalled() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
 
-    eventEmitter
-        .on(
-            (e, ctrl) -> {
-              s.append("A");
-              ctrl.unsubscribe();
-            })
-        .on(e -> s.append("B"));
+    emitter.register(
+        "A",
+        (event, ctrl) -> {
+          received.add("A");
+          ctrl.unregister();
+        });
+    emitter.register("B", (event, ctrl) -> received.add("B"));
 
-    eventEmitter.emit("test");
-    assertEquals("AB", s.toString());
+    emitter.emit("1");
+    assertEquals(List.of("A", "B"), received);
 
-    s.setLength(0);
-    eventEmitter.emit("test");
-    assertEquals("B", s.toString());
+    received.clear();
+    emitter.emit("2");
+    assertEquals(List.of("B"), received);
   }
 
   @Test
-  void testClear() {
-    StringBuilder s = new StringBuilder();
+  void shouldAllowMultipleDispatches() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
 
-    eventEmitter.on(e -> s.append("A")).on(e -> s.append("B")).clear().on(e -> s.append("C"));
+    emitter.register("A", (event, ctrl) -> received.add(event));
 
-    eventEmitter.emit("test");
-    assertEquals("C", s.toString());
+    emitter.emit("1");
+    emitter.emit("2");
+    emitter.emit("3");
+
+    assertEquals(List.of("1", "2", "3"), received);
   }
 
   @Test
-  void on_withNullKey_shouldThrowException() {
-    assertThrows(IllegalArgumentException.class, () -> eventEmitter.on(null, e -> {}, 0));
+  void shouldThrowOnDuplicateKey() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    emitter.register("A", (event, ctrl) -> {});
+
+    assertThrows(IllegalStateException.class, () -> emitter.register("A", (event, ctrl) -> {}));
   }
 
   @Test
-  void on_withNewKey_shouldSubscribe() {
-    eventEmitter.on("testKey", e -> {}, 1);
-    assertTrue(eventEmitter.hasKey("testKey"));
-    assertFalse(eventEmitter.hasKey("no such key"));
+  void shouldStreamListenersInOrder() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+
+    emitter.register("A", (e, c) -> {});
+    emitter.withDependencies().after("A").register("B", (e, c) -> {});
+
+    List<BiListener<String, EventEmitter.Control>> listeners = emitter.stream().toList();
+
+    assertEquals(2, listeners.size());
   }
 
   @Test
-  void on_withExistingKey_shouldReplace() {
-    StringBuilder s = new StringBuilder();
+  void shouldPassEventToAllListeners() {
+    EventEmitter.Owned<Integer, String> emitter = EventEmitter.create();
+    List<Integer> values = new ArrayList<>();
 
-    eventEmitter.on("testKey", e -> s.append("A")).on("testKey", e -> s.append("B"));
+    emitter.register("A", (e, c) -> values.add(e * 1));
+    emitter.register("B", (e, c) -> values.add(e * 2));
+    emitter.register("C", (e, c) -> values.add(e * 3));
 
-    eventEmitter.emit(null);
-    assertEquals("B", s.toString());
+    emitter.emit(5);
+
+    assertEquals(List.of(5, 10, 15), values);
+  }
+
+  @Test
+  void shouldHandleStopAndUnregisterTogether() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
+
+    emitter.register(
+        "A",
+        (event, ctrl) -> {
+          received.add("A");
+          ctrl.stop();
+          ctrl.unregister();
+        });
+    emitter.register("B", (event, ctrl) -> received.add("B"));
+
+    emitter.emit("1");
+    assertEquals(List.of("A"), received);
+
+    received.clear();
+    emitter.emit("2");
+    assertEquals(List.of("B"), received);
+  }
+
+  @Test
+  void shouldResolveComplexDependencies() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> order = new ArrayList<>();
+
+    emitter.withDependencies().after("B").register("C", (e, c) -> order.add("C"));
+    emitter.withDependencies().before("B").register("A", (e, c) -> order.add("A"));
+    emitter.register("B", (e, c) -> order.add("B"));
+    emitter.withDependencies().after("A").before("C").register("D", (e, c) -> order.add("D"));
+
+    emitter.emit("x");
+
+    int indexA = order.indexOf("A");
+    int indexB = order.indexOf("B");
+    int indexC = order.indexOf("C");
+    int indexD = order.indexOf("D");
+
+    assertTrue(indexA < indexB);
+    assertTrue(indexB < indexC);
+    assertTrue(indexA < indexD);
+    assertTrue(indexD < indexC);
+  }
+
+  @Test
+  void shouldUnregisterMultipleListenersIndependently() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
+
+    emitter.register(
+        "A",
+        (event, ctrl) -> {
+          received.add("A");
+          ctrl.unregister();
+        });
+    emitter.register("B", (event, ctrl) -> received.add("B"));
+    emitter.register(
+        "C",
+        (event, ctrl) -> {
+          received.add("C");
+          ctrl.unregister();
+        });
+
+    emitter.emit("1");
+    assertEquals(List.of("A", "B", "C"), received);
+
+    received.clear();
+    emitter.emit("2");
+    assertEquals(List.of("B"), received);
+  }
+
+  @Test
+  void shouldHandleEmptyDispatcher() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+
+    assertDoesNotThrow(() -> emitter.emit("x"));
+  }
+
+  // region on
+
+  @Test
+  void onShouldChainMultipleRegistrations() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
+
+    emitter.on("A", (e, c) -> received.add("A"));
+    emitter.on("B", (e, c) -> received.add("B"));
+    emitter.on("C", (e, c) -> received.add("C"));
+
+    emitter.emit("x");
+
+    assertEquals(List.of("A", "B", "C"), received);
+  }
+
+  @Test
+  void onWithOneArgShouldReceiveEventOnly() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
+
+    emitter.on("A", (String e) -> received.add(e));
+
+    emitter.emit("hello");
+
+    assertEquals(List.of("hello"), received);
+  }
+
+  @Test
+  void onWithNoArgShouldReceiveNoParameters() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
+
+    emitter.on("A", () -> received.add("called"));
+
+    emitter.emit("hello");
+
+    assertEquals(List.of("called"), received);
   }
 
   // endregion
 
-  // region Memory Management & Weak Reference Tests
+  // region once
 
-  @Disabled
   @Test
-  void testWeakKeyGarbageCollection() throws InterruptedException {
-    AtomicInteger executionCount = new AtomicInteger(0);
+  void shouldFireOnceThenAutoUnregister() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
 
-    Object key = new Object();
-    eventEmitter.on(key, e -> executionCount.incrementAndGet());
+    emitter.once("A", (e, c) -> received.add(e));
 
-    java.lang.ref.WeakReference<Object> keyTracker = new java.lang.ref.WeakReference<>(key);
+    emitter.emit("1");
+    emitter.emit("2");
+    emitter.emit("3");
 
-    key = null;
-
-    long startTime = System.currentTimeMillis();
-    while (keyTracker.get() != null) {
-      System.gc();
-      Thread.sleep(10);
-      if (System.currentTimeMillis() - startTime > 2000) {
-        fail("Key was not garbage collected within the timeout period.");
-      }
-    }
-
-    eventEmitter.emit(null);
-    assertEquals(0, executionCount.get());
-
-    assertFalse(eventEmitter.hasKey(keyTracker.get()));
+    assertEquals(List.of("1"), received);
   }
 
   @Test
-  void testWeakKeySurvivesWhenStronglyReferenced() {
-    AtomicInteger executionCount = new AtomicInteger(0);
+  void onceWithNoArgShouldFireOnce() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    int[] count = {0};
 
-    Object key = new Object();
-    eventEmitter.on(key, e -> executionCount.incrementAndGet());
+    emitter.once("A", () -> count[0]++);
 
-    System.gc();
+    emitter.emit("x");
+    emitter.emit("y");
 
-    eventEmitter.emit(null);
-    assertEquals(1, executionCount.get());
+    assertEquals(1, count[0]);
+  }
+
+  @Test
+  void onceWithOneArgShouldFireOnce() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
+
+    emitter.once("A", (String e) -> received.add(e));
+
+    emitter.emit("1");
+    emitter.emit("2");
+
+    assertEquals(List.of("1"), received);
+  }
+
+  @Test
+  void onceShouldNotAffectOtherListeners() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
+
+    emitter.once("A", (e, c) -> received.add("A"));
+    emitter.register("B", (e, c) -> received.add("B"));
+
+    emitter.emit("1");
+    emitter.emit("2");
+
+    assertEquals(List.of("A", "B", "B"), received);
+  }
+
+  @Test
+  void shouldStopOnlyPropagationNotUnregister() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
+    boolean[] stopped = {false};
+
+    emitter.register(
+        "A",
+        (e, c) -> {
+          received.add("A");
+          if (!stopped[0]) {
+            stopped[0] = true;
+            c.stop();
+          }
+        });
+    emitter.register("B", (e, c) -> received.add("B"));
+
+    emitter.emit("1");
+    assertEquals(List.of("A"), received);
+
+    received.clear();
+    emitter.emit("2");
+    assertEquals(List.of("A", "B"), received);
+  }
+
+  @Test
+  void shouldUnregisterWithoutStopping() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
+
+    emitter.register(
+        "A",
+        (e, c) -> {
+          received.add("A");
+          c.unregister();
+        });
+    emitter.register("B", (e, c) -> received.add("B"));
+
+    emitter.emit("1");
+    assertEquals(List.of("A", "B"), received);
+
+    received.clear();
+    emitter.emit("2");
+    assertEquals(List.of("B"), received);
+  }
+
+  @Test
+  void onceWithStopShouldStopAndAutoUnregister() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
+
+    emitter.once(
+        "A",
+        (e, c) -> {
+          received.add("A");
+          c.stop();
+        });
+    emitter.register("B", (e, c) -> received.add("B"));
+
+    emitter.emit("1");
+    assertEquals(List.of("A"), received);
+
+    received.clear();
+    emitter.emit("2");
+    assertEquals(List.of("B"), received);
+  }
+
+  @Test
+  void stopInMiddleShouldPreventLaterListeners() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    List<String> received = new ArrayList<>();
+
+    emitter.register("A", (e, c) -> received.add("A"));
+    emitter.register(
+        "B",
+        (e, c) -> {
+          received.add("B");
+          c.stop();
+        });
+    emitter.register("C", (e, c) -> received.add("C"));
+
+    emitter.emit("x");
+
+    assertEquals(List.of("A", "B"), received);
   }
 
   // endregion
 
-  // region Custom Map Injection Tests
+  // region sort
 
   @Test
-  void constructor_withPrePopulatedMap_shouldThrowException() {
-    Map<Object, Object> prePopulatedMap = new HashMap<>();
-    prePopulatedMap.put("existingKey", "someValue");
+  void shouldDetectCyclicDependencyOnSort() {
+    EventEmitter.Owned<String, String> emitter = EventEmitter.create();
+    emitter.withDependencies().after("B").register("A", (e, c) -> {});
+    emitter.withDependencies().after("A").register("B", (e, c) -> {});
 
-    assertThrows(IllegalArgumentException.class, () -> new EventEmitter<>(prePopulatedMap));
-  }
-
-  @Test
-  void constructor_withCustomEmptyMap_shouldFunctionCorrectly() {
-    Map<Object, ?> customMap = new LinkedHashMap<>();
-    EventEmitter<Object> customEmitter = new EventEmitter<>(customMap);
-
-    AtomicInteger count = new AtomicInteger(0);
-    customEmitter.on("customKey", e -> count.incrementAndGet());
-
-    customEmitter.emit(null);
-    assertEquals(1, count.get());
-    assertTrue(customEmitter.hasKey("customKey"));
-  }
-
-  // endregion
-
-  // region Edge Cases & Defensive Programming Tests
-
-  @Test
-  void off_withNonExistentKey_shouldNotThrow() {
-    assertDoesNotThrow(() -> eventEmitter.off("nonExistentKey"));
-  }
-
-  @Test
-  void off_withNonExistentListener_shouldNotThrow() {
-    EventEmitter.Listener.NoArg<Object> unregisteredListener = () -> {};
-    assertDoesNotThrow(() -> eventEmitter.off(unregisteredListener));
-  }
-
-  @Test
-  void getListener_withExistingKey_shouldReturnListener() {
-    EventEmitter.Listener.NoArg<Object> listener = () -> {};
-    eventEmitter.on("myKey", listener);
-
-    assertEquals(listener, eventEmitter.getListener("myKey"));
-  }
-
-  @Test
-  void getListener_withNonExistentKey_shouldReturnNull() {
-    assertNull(eventEmitter.getListener("nonExistentKey"));
-  }
-
-  @Test
-  void getListener_withNullKey_shouldReturnNull() {
-    assertNull(eventEmitter.getListener(null));
-  }
-
-  @Test
-  void emit_withNoListeners_shouldNotThrow() {
-    assertDoesNotThrow(() -> eventEmitter.emit("payload"));
-  }
-
-  @Test
-  void emit_withPayload_shouldPassPayloadToListener() {
-    AtomicInteger receivedPayload = new AtomicInteger(0);
-
-    eventEmitter.on((e) -> receivedPayload.set((Integer) e));
-
-    @SuppressWarnings("unchecked")
-    EventEmitter<Integer> intEmitter = (EventEmitter<Integer>) (EventEmitter<?>) eventEmitter;
-
-    intEmitter.emit(42);
-    assertEquals(42, receivedPayload.get());
+    assertThrows(CyclicDependencyException.class, emitter::sort);
   }
 
   // endregion

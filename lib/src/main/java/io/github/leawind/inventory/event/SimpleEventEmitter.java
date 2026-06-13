@@ -4,11 +4,11 @@ import io.github.leawind.inventory.event.impl.SimpleEventEmitterImpl;
 import java.util.Collection;
 
 public interface SimpleEventEmitter<E> {
-  static <E> Owner<E> create() {
+  static <E> Owned<E> create() {
     return new SimpleEventEmitterImpl<>();
   }
 
-  static <E> Owner<E> create(Collection<Listener<E>> listeners) {
+  static <E> Owned<E> create(Collection<Listener<E>> listeners) {
     return new SimpleEventEmitterImpl<>(listeners);
   }
 
@@ -18,7 +18,7 @@ public interface SimpleEventEmitter<E> {
 
   SimpleEventEmitter<E> on(Listener.NoArg<E> listener);
 
-  interface Owner<E> extends SimpleEventEmitter<E> {
+  interface Owned<E> extends SimpleEventEmitter<E> {
     void emit();
 
     void emit(E event);

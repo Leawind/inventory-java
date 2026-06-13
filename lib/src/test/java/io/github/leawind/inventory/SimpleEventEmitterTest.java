@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class SimpleEventEmitterTest {
-  private SimpleEventEmitter.Owner<String> eventEmitter;
+  private SimpleEventEmitter.Owned<String> eventEmitter;
 
   @BeforeEach
   void setUp() {

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import org.jspecify.annotations.Nullable;
 
-public class SimpleEventEmitterImpl<E> implements SimpleEventEmitter.Owner<E> {
+public class SimpleEventEmitterImpl<E> implements SimpleEventEmitter.Owned<E> {
 
   private final Collection<Listener<E>> listeners;
 

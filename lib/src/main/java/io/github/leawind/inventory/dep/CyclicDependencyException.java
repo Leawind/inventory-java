@@ -1,8 +1,8 @@
-package io.github.leawind.inventory.event;
+package io.github.leawind.inventory.dep;
 
+import io.github.leawind.inventory.event.DependencyException;
 import java.util.Collection;
 
-/** 检测到循环依赖。 */
 public final class CyclicDependencyException extends DependencyException {
 
   private final Collection<?> cycleNodes;

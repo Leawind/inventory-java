@@ -1,5 +1,6 @@
 package io.github.leawind.inventory.event.impl;
 
+import io.github.leawind.inventory.dep.DependencyRegistryImpl;
 import io.github.leawind.inventory.event.BiListener;
 import io.github.leawind.inventory.event.EventEmitter;
 

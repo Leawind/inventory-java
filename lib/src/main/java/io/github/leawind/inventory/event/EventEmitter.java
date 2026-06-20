@@ -1,5 +1,6 @@
 package io.github.leawind.inventory.event;
 
+import io.github.leawind.inventory.dep.DependencyRegistry;
 import io.github.leawind.inventory.event.impl.EventEmitterImpl;
 
 public interface EventEmitter<E, K>

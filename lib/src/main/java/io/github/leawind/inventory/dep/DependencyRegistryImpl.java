@@ -1,7 +1,5 @@
-package io.github.leawind.inventory.event.impl;
+package io.github.leawind.inventory.dep;
 
-import io.github.leawind.inventory.event.CyclicDependencyException;
-import io.github.leawind.inventory.event.DependencyRegistry;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -14,19 +12,21 @@ public class DependencyRegistryImpl<K, T> implements DependencyRegistry.Owned<K,
   private boolean dirty = false;
 
   @Override
-  public void register(K key, T value) {
+  public void register(K key, T value, Dependencies<K> dependencies) {
     Objects.requireNonNull(key, "key");
     Objects.requireNonNull(value, "value");
-    if (entries.containsKey(key)) {
-      throw new IllegalStateException("Duplicate listener key: " + key);
-    }
-    entries.put(key, new Entry<>(key, value, Collections.emptySet(), Collections.emptySet()));
+    Objects.requireNonNull(dependencies, "dependencies");
+
+    entries.put(
+        key,
+        new Entry<>(
+            key, value, Set.copyOf(dependencies.getBefore()), Set.copyOf(dependencies.getAfter())));
     dirty = true;
   }
 
   @Override
-  public Builder<K, T> withDependencies() {
-    return new BuilderImpl();
+  public void register(K key, T value) {
+    register(key, value, new DependenciesImpl<>());
   }
 
   @Override
@@ -39,6 +39,11 @@ public class DependencyRegistryImpl<K, T> implements DependencyRegistry.Owned<K,
     return sortedList().stream();
   }
 
+  @Override
+  public Iterable<T> iterable() {
+    return sortedList();
+  }
+
   protected List<T> sortedList() {
     if (dirty) {
       rebuild();
@@ -46,46 +51,6 @@ public class DependencyRegistryImpl<K, T> implements DependencyRegistry.Owned<K,
     }
     return sortedCache;
   }
-
-  // -------------------- Builder Implementation --------------------
-
-  private class BuilderImpl implements Builder<K, T> {
-    private final Set<K> beforeKeys = new LinkedHashSet<>();
-    private final Set<K> afterKeys = new LinkedHashSet<>();
-
-    @Override
-    public Builder<K, T> before(K key) {
-      Objects.requireNonNull(key, "before key");
-      beforeKeys.add(key);
-      return this;
-    }
-
-    @Override
-    public Builder<K, T> after(K key) {
-      Objects.requireNonNull(key, "after key");
-      afterKeys.add(key);
-      return this;
-    }
-
-    @Override
-    public void register(K key, T value) {
-      Objects.requireNonNull(key, "key");
-      Objects.requireNonNull(value, "value");
-      if (entries.containsKey(key)) {
-        throw new IllegalStateException("Duplicate listener key: " + key);
-      }
-      entries.put(
-          key,
-          new Entry<>(
-              key,
-              value,
-              Collections.unmodifiableSet(new LinkedHashSet<>(beforeKeys)),
-              Collections.unmodifiableSet(new LinkedHashSet<>(afterKeys))));
-      dirty = true;
-    }
-  }
-
-  // -------------------- Topological Sorting Implementation --------------------
 
   private void rebuild() {
     Map<K, Set<K>> adj = new HashMap<>(entries.size());
@@ -99,11 +64,9 @@ public class DependencyRegistryImpl<K, T> implements DependencyRegistry.Owned<K,
     for (Entry<K, T> entry : entries.values()) {
       K u = entry.key;
 
-      // u.before(v): u must come before v → edge u → v
       for (K v : entry.beforeKeys) {
         addEdge(u, v, adj, inDegree, entries.containsKey(v));
       }
-      // u.after(v): v must come before u → edge v → u
       for (K v : entry.afterKeys) {
         addEdge(v, u, adj, inDegree, entries.containsKey(v));
       }

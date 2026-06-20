@@ -2,6 +2,8 @@ package io.github.leawind.inventory.event;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.github.leawind.inventory.dep.CyclicDependencyException;
+import io.github.leawind.inventory.dep.Dependencies;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -32,9 +34,9 @@ class EventEmitterTest {
     EventEmitter.Owned<String, String> emitter = EventEmitter.create();
     List<String> order = new ArrayList<>();
 
-    emitter.withDependencies().after("B").register("A", (e, c) -> order.add("A"));
+    emitter.register("A", (e, c) -> order.add("A"), Dependencies.<String>create().after("B"));
     emitter.register("B", (e, c) -> order.add("B"));
-    emitter.withDependencies().after("A").register("C", (e, c) -> order.add("C"));
+    emitter.register("C", (e, c) -> order.add("C"), Dependencies.<String>create().after("A"));
 
     emitter.emit("x");
 
@@ -95,11 +97,10 @@ class EventEmitterTest {
   }
 
   @Test
-  void shouldThrowOnDuplicateKey() {
+  void shouldNotThrowOnDuplicateKey() {
     EventEmitter.Owned<String, String> emitter = EventEmitter.create();
     emitter.register("A", (event, ctrl) -> {});
-
-    assertThrows(IllegalStateException.class, () -> emitter.register("A", (event, ctrl) -> {}));
+    emitter.register("A", (event, ctrl) -> {});
   }
 
   @Test
@@ -107,7 +108,7 @@ class EventEmitterTest {
     EventEmitter.Owned<String, String> emitter = EventEmitter.create();
 
     emitter.register("A", (e, c) -> {});
-    emitter.withDependencies().after("A").register("B", (e, c) -> {});
+    emitter.register("B", (e, c) -> {}, Dependencies.<String>create().after("A"));
 
     List<BiListener<String, EventEmitter.Control>> listeners = emitter.stream().toList();
 
@@ -155,10 +156,11 @@ class EventEmitterTest {
     EventEmitter.Owned<String, String> emitter = EventEmitter.create();
     List<String> order = new ArrayList<>();
 
-    emitter.withDependencies().after("B").register("C", (e, c) -> order.add("C"));
-    emitter.withDependencies().before("B").register("A", (e, c) -> order.add("A"));
+    emitter.register("C", (e, c) -> order.add("C"), Dependencies.<String>create().after("B"));
+    emitter.register("A", (e, c) -> order.add("A"), Dependencies.<String>create().before("B"));
     emitter.register("B", (e, c) -> order.add("B"));
-    emitter.withDependencies().after("A").before("C").register("D", (e, c) -> order.add("D"));
+    emitter.register(
+        "D", (e, c) -> order.add("D"), Dependencies.<String>create().after("A").before("C"));
 
     emitter.emit("x");
 
@@ -398,8 +400,8 @@ class EventEmitterTest {
   @Test
   void shouldDetectCyclicDependencyOnSort() {
     EventEmitter.Owned<String, String> emitter = EventEmitter.create();
-    emitter.withDependencies().after("B").register("A", (e, c) -> {});
-    emitter.withDependencies().after("A").register("B", (e, c) -> {});
+    emitter.register("A", (e, c) -> {}, Dependencies.<String>create().after("B"));
+    emitter.register("B", (e, c) -> {}, Dependencies.<String>create().after("A"));
 
     assertThrows(CyclicDependencyException.class, emitter::sort);
   }

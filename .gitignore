@@ -4,15 +4,20 @@
 # Gradle build output
 build
 
-# AI tools
+# AI agents
 /.ai/
+.claude/
 .clinerules/
 .codebuddy/
 .cursorrules/
 .kilo/
+.kilocode/
 .lingma/
 .marscode/
+.mimocode/
+.opencode/
 .trae/
+
 
 # idea
 .idea/
